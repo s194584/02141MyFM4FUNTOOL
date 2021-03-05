@@ -1,0 +1,6 @@
+
+C ::= x := a | A[a] := a | skip | C; C | if GC fi | do GC od | continue | break | try C catch HC yrt | throw e
+GC ::= b -> C | GC [] GC
+HC ::= e: C | HC [] HC
+a ::= n | x | A[a] | a + a | a - a | a * a | a % a | a / a | -a | a ^ a | (a)
+b ::= true | false | b & b | b | b | b && b | b || b | !b | a = a | a != a | a > a | a >= a | a < a | a <= a | (b)
