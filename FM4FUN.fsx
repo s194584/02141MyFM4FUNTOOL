@@ -4,29 +4,16 @@
 #r "C:/Users/Jahar/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
 open FSharp.Text.Lexing
 open System
-#load "CalculatorTypesAST.fs"
-open CalculatorTypesAST
-#load "CalculatorParser.fs"
-open CalculatorParser
-#load "CalculatorLexer.fs"
-open CalculatorLexer
+#load "FM4FUNAST.fs"
+open FM4FUNAST
+#load "FM4FUNParser.fs"
+open FM4FUNParser
+#load "FM4FUNLexer.fs"
+open FM4FUNLexer
 
 // We define the evaluation function recursively, by induction on the structure
 // of arithmetic expressions (AST of type expr)
-let rec eval e =
-  match e with
-    | Num(x) -> x
-    | TimesExpr(x,y) -> eval(x) * eval (y)
-    | DivExpr(x,y) -> eval(x) / eval (y)
-    | PlusExpr(x,y) -> eval(x) + eval (y)
-    | MinusExpr(x,y) -> eval(x) - eval (y)
-    | PowExpr(x,y) -> eval(x) ** eval (y)
-    | UPlusExpr(x) -> eval(x)
-    | UMinusExpr(x) -> - eval(x)
-    | SqrtExpr(x) -> sqrt(eval(x))
-    | LogExpr(x) -> log10(eval(x))
-    | LnExpr(x) -> log(eval(x))
-    | ModExpr(x,y) -> eval(x) % eval(y)
+let rec eval e = 1.0
 
 
 // We
@@ -34,7 +21,7 @@ let parse input =
     // translate string into a buffer of characters
     let lexbuf = LexBuffer<char>.FromString input
     // translate the buffer into a stream of tokens and parse them
-    let res = CalculatorParser.start CalculatorLexer.tokenize lexbuf
+    let res = FM4FUNParser.start FM4FUNLexer.tokenize lexbuf
     // return the result of parsing (i.e. value of type "expr")
     res
 
@@ -44,15 +31,14 @@ let rec compute n =
         printfn "Bye bye"
     else
         printf "Enter an arithmetic expression: "
-        try
+
         // We parse the input string
+        printfn "About to parse"
         let e = parse (Console.ReadLine())
         printfn "%A" e
         // and print the result of evaluating it
         printfn "Result: %f" (eval(e))
         compute n
-
-        with err -> compute (n-1)
 
 // Start interacting with the user
 compute 3
