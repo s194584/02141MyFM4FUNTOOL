@@ -11,11 +11,30 @@ open FM4FUNParser
 #load "FM4FUNLexer.fs"
 open FM4FUNLexer
 
-// We define the evaluation function recursively, by induction on the structure
-// of arithmetic expressions (AST of type expr)
-let rec eval e = 1.0
+// We only have to indent when we enter do or if
+// the indentation will be the length from the keyword
+// to the THEN (->) + 1.
+// The end keywords would then reduce the indentation again.
+//      The above could be done with recursion?
+// So we can maybe generate the lines in order. (Array of strings)
+// Then go through calculating the length of the 
+// needed indentation. (Insert space (' ') strings into the correct )
+// Lastly generate the strings and add 'newlines'
+let generateLines (cexp:cexp) =
+    match cexp with
+    | _ -> [""]
 
+let addIndentation strs =
+    match strs with
+    | x::xs -> [""]
+    | _ -> [""]
 
+let prettify (cexp:cexp) = 
+    let rec combine l s = 
+        match l with
+        | ind::str::ls -> combine ls (s+ind+str+"\n")
+        | _ -> s
+    combine (addIndentation (generateLines cexp)) ""
 // We
 let parse input =
     // translate string into a buffer of characters
@@ -36,11 +55,9 @@ let rec compute n =
             // We parse the input string
             let e = parse (Console.ReadLine())
             printfn "%A" e
-            // and print the result of evaluating it
-            //printfn "Result: %f" (eval(e))
             compute n
         with err -> 
-            printfn "Invalid"
+            printfn "%s" (err.ToString())
             compute (n-1)
 
 // Start interacting with the user

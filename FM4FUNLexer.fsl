@@ -60,15 +60,16 @@ rule tokenize = parse
 
 // Ignore the keyword so that no token is created, this way the parser will pick up
 // the errors when no token is at a expected 
-| "if"              { tokenize lexbuf }
-| "fi"              { tokenize lexbuf }
-| "do"              { tokenize lexbuf }
-| "od"              { tokenize lexbuf }
+| "if"              { failwith (sprintf "\"if\" is not allowed here: Char %d" (lexbuf.EndPos.AbsoluteOffset)) }
+| "fi"              { failwith (sprintf "\"fi\" is not allowed here: Char %d" (lexbuf.EndPos.AbsoluteOffset)) }
+| "do"              { failwith (sprintf "\"do\" is not allowed here: Char %d" (lexbuf.EndPos.AbsoluteOffset)) }
+| "od"              { failwith (sprintf "\"od\" is not allowed here: Char %d" (lexbuf.EndPos.AbsoluteOffset)) }
 
 // Lastly it checks for variable names. Since the rules
 | var               { VAR(LexBuffer<_>.LexemeString lexbuf)}
-| num               { NUM(LexBuffer<_>.LexemeString lexbuf |> int) }
+| num               { NUM((int) (LexBuffer<_>.LexemeString lexbuf)) }
 | eof               { EOF }
+| _                 { failwith (sprintf "Unknown failure at: Char %d" (lexbuf.EndPos.AbsoluteOffset)) }
 
 
 
