@@ -9,59 +9,66 @@ open FM4FUNParser
 }
 
 // We define macros for some regular expressions we will use later
-//let digit       = ['0'-'9']
-//let num         = digit+ ( '.' digit+)?  ('E' ('+'|'-')? digit+ )?
-//let whitespace  = [' ' '\t']
-//let newline     = "\n\r" | '\n' | '\r'
-
 // men ikke nogle keywords: if,fi,do,od,skip,true,false
+let keywords = ("if"|"fi"|"do"|"od"|"skip"|"true"|"false")
 let digit = ['0'-'9']
-let var = ['a'-'z''A'-'Z'](['a'-'z']|['A'-'Z']|digit|'_')*
+let var = (['a'-'z''A'-'Z'](['a'-'z']|['A'-'Z']|digit|'_')*)
 let num = digit+
-let whitespace = ("\u00A0"'\n''\r''\t')
+let whitespace = [' ' '\n' '\r' '\t']
 
 // We define now the rules for recognising and building tokens
 // for each of the tokens of our language we need a rule
 // NOTE: rules are applied in order top-down.
 //       This is important when tokens overlap (not in this example)
 rule tokenize = parse
-// deal with tokens that need to be ignored (skip them)
-| whitespace    { tokenize lexbuf }
-//| newline       { lexbuf.EndPos <- lexbuf.EndPos.NextLine; tokenize lexbuf; }
-// deal with tokens that need to be built
-| num           { NUM((LexBuffer<_>.LexemeString lexbuf)|>int) }
-| var           { VAR(LexBuffer<_>.LexemeString lexbuf)}
-| ":="          { ASSIGN }
-| "skip"        { SKIP }
-| ';'           { SEP }
-| "if "         { IF }
-| " fi"         { FI }
-| "do "         { DO }
-| " od"         { OD }
-| "->"          { THEN }
-| "[]"          { CONS }
-| '['           { LBRA }
-| ']'           { RBRA }
-| '+'           { PLUS }
-| '-'           { MINUS }
-| '*'           { MULT }
-| '/'           { DIV }
-| '^'           { POW }
-| '('           { LPAR }
-| ')'           { RPAR }
-| "true"        { TRUE }
-| "false"       { FALSE }
-| "&&"          { AND }
-| "||"          { OR }
-| '&'           { SAND }
-| '|'           { SOR }
-| "!="          { NEQ }
-| ">="          { GEQ }
-| "<="          { LEQ }
-| '='           { EQ }
-| '>'           { GT }
-| '<'           { LT }
-| '!'           { NOT }
+
+// Checking first for keywords with a mandatory whitespace
+| "if" whitespace   { IF }
+| whitespace "fi"   { FI }
+| "do" whitespace   { DO }
+| whitespace "od"   { OD }
+
+// Then ignoring the rest of whitespace
+| whitespace        { tokenize lexbuf }
+| ":="              { ASSIGN }
+| "skip"            { SKIP }
+| ';'               { SEP }
+| "->"              { THEN }
+| "[]"              { CONS }
+| '['               { LBRA }
+| ']'               { RBRA }
+| '+'               { PLUS }
+| '-'               { MINUS }
+| '*'               { MULT }
+| '/'               { DIV }
+| '^'               { POW }
+| '('               { LPAR }
+| ')'               { RPAR }
+| "true"            { TRUE }
+| "false"           { FALSE }
+| "&&"              { SAND }
+| "||"              { SOR }
+| '&'               { AND }
+| '|'               { OR }
+| "!="              { NEQ }
+| ">="              { GEQ }
+| "<="              { LEQ }
+| '='               { EQ }
+| '>'               { GT }
+| '<'               { LT }
+| '!'               { NOT }
+
+// Ignore the keyword so that no token is created, this way the parser will pick up
+// the errors when no token is at a expected 
+| "if"              { tokenize lexbuf }
+| "fi"              { tokenize lexbuf }
+| "do"              { tokenize lexbuf }
+| "od"              { tokenize lexbuf }
+
+// Lastly it checks for variable names. Since the rules
+| var               { VAR(LexBuffer<_>.LexemeString lexbuf)}
+| num               { NUM(LexBuffer<_>.LexemeString lexbuf |> int) }
+| eof               { EOF }
 
 
 

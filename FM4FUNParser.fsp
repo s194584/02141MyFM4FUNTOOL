@@ -12,9 +12,7 @@ open FM4FUNAST
 
 // Specify precedence and associativity of operators
 // Precedence is given by the order (from low to high)
-//%left PLUS MINUS
-//%left TIMES DIV
-//%right POW
+%right CONS SEP
 
 
 // We declare the initial non-terminal symbol
@@ -24,8 +22,8 @@ open FM4FUNAST
 %type <cexp> start
 %type <cexp> C
 %type <gcexp> GC
-%type <aexp> a
-%type <bexp> b
+%type <aexp> a0
+%type <bexp> b0
 
 // Grammar productions
 %%
@@ -43,49 +41,67 @@ start: C EOF                      { $1 }
 // The productions for expressions are like in the grammar we saw in class
 // written in the yacc format:
 
-C: // Associates to the *****
-  | VAR ASSIGN a                  { Assign(Var($1),$3) }      // x := a
-  | VAR LBRA a RBRA ASSIGN a      { Assign(Array($1,$3),$6) } // A[a] := a
+C:
+  | VAR ASSIGN a0                 { Assign(Var($1),$3) }      // x := a0
+  | VAR LBRA a0 RBRA ASSIGN a0    { Assign(Array($1,$3),$6) } // A[a0] := a0
   | SKIP                          { Skip }                    // skip
   | C SEP C                       { C($1,$3) }                // C ; C
   | IF GC FI                      { If($2) }                  // if GC fi
   | DO GC OD                      { Do($2) }                  // do GC od
+Ca:
+  | LPAR C RPAR                   { $2 }
 
-GC: // Associates to the *****
-  | b THEN C                      { Then($1,$3) }             // b -> C
+GC:
+  | b0 THEN C                     { Then($1,$3) }             // b0 -> C
   | GC CONS GC                    { GC($1,$3) }               // GC [] GC
+GCa:
+  | LPAR GC RPAR                  { $2 }
 
-a: // Associates to the ******
+// Arithmetic expressions
+// Priority levels 0 | a + a , a - a
+a0:
+  | a0 PLUS a1                     { Plus($1,$3) }             // a0 + a0
+  | a0 MINUS a1                    { Minus($1,$3) }            // a0 - a0
+  | a1                             { $1 }                      // (a1)
+// Priority levels 1 | a * a , a / a
+a1:
+  | a1 MULT a2                     { Mult($1,$3) }             // a1 * a1
+  | a1 DIV a2                      { Div($1,$3) }              // a1 / a1
+  | a2                             { $1 }                      // (a2)
+// Priority levels 2 | a ^ a
+a2:
+  | a3 POW a2                      { Pow($1,$3) }              // a2 ^ a2
+  | a3                             { $1 }                      // (a3)
+// Priority levels 3 | -a , rest
+a3:
   | NUM                           { Num($1) }                 // n
-  | VAR                           { V(Var($1)) }                 // x
-  | VAR LBRA a RBRA               { V(Array($1,$3)) }            // A[a]
-  | a PLUS a                      { Plus($1,$3) }             // a + a
-  | a MINUS a                     { Minus($1,$3) }            // a - a
-  | a MULT a                      { Mult($1,$3) }             // a * a
-  | a DIV a                       { Div($1,$3) }              // a / a
-  | MINUS a                       { UMinus($2) }              // -a
-  | a POW a                       { Pow($1,$3) }              // a ^ a
-  | LPAR a RPAR                   { $2 }                      // (a)
+  | VAR                           { V(Var($1)) }              // x
+  | VAR LBRA a3 RBRA              { V(Array($1,$3)) }         // A[a3]
+  | MINUS a3                      { UMinus($2) }              // -a3
+  | LPAR a0 RPAR                  { $2 }                      // (a0)
 
-b: // Associate ******
+// Boolean expressions
+// Priority levels 0 | b | b , b || b
+b0:
+  | b0 SOR b1                     { SOr($1,$3) }              // b0 || b0
+  | b0 OR b1                      { Or($1,$3) }               // b0 | b0
+  | b1                            { $1 }                      // (b1)
+// Priority levels 1 | b & b , b && b
+b1:
+  | b1 SAND b2                    { SAnd($1,$3) }             // b1 && b1
+  | b1 AND b2                     { And($1,$3) }              // b1 & b1
+  | b2                            { $1 }                      // (b2)
+// Priority levels 2 | !b , rest
+b2:
   | TRUE                          { True }                    // true
   | FALSE                         { False }                   // false
-  | b SAND b                      { SAnd($1,$3) }             // b & b
-  | b SOR b                       { SOr($1,$3) }              // b | b
-  | b AND b                       { And($1,$3) }              // b && b
-  | b OR b                        { Or($1,$3) }               // b || b
-  | NOT b                         { Not($2) }                 // !b
-  | a EQ a                        { Eq($1,$3) }               // a = a
-  | a NEQ a                       { Neq($1,$3) }              // a != a
-  | a GT a                        { Gt($1,$3) }               // a > a
-  | a GEQ a                       { Geq($1,$3) }              // a >= a
-  | a LT a                        { Lt($1,$3) }               // a < a
-  | a LEQ a                       { Leq($1,$3) }              // a <= a
-  | LPAR b RPAR                   { $2 }                      // (b)
-
-// Again, the code annotation specifies the result of parsing
-// For example { TimesExpr($1,$3) } specifies that parsing with the production
-// returns the value TimesExpr($1,$3), where $i is the result of parsing
-// component i in the production (in this case the lhs and rhs operands)
+  | NOT b2                        { Not($2) }                 // !b2
+  | a0 EQ a0                      { Eq($1,$3) }               // a0 = a0
+  | a0 NEQ a0                     { Neq($1,$3) }              // a0 != a0
+  | a0 GT a0                      { Gt($1,$3) }               // a0 > a0
+  | a0 GEQ a0                     { Geq($1,$3) }              // a0 >= a0
+  | a0 LT a0                      { Lt($1,$3) }               // a0 < a0
+  | a0 LEQ a0                     { Leq($1,$3) }              // a0 <= a0
+  | LPAR b0 RPAR                  { $2 }                      // (b0)
 
 %%

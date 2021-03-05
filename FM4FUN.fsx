@@ -30,18 +30,19 @@ let rec compute n =
     if n = 0 then
         printfn "Bye bye"
     else
-        printf "Enter an arithmetic expression: "
+        try
+            printf "Enter an GCL-command: "
 
-        // We parse the input string
-        printfn "About to parse"
-        let e = parse (Console.ReadLine())
-        printfn "%A" e
-        // and print the result of evaluating it
-        printfn "Result: %f" (eval(e))
-        compute n
+            // We parse the input string
+            let e = parse (Console.ReadLine())
+            printfn "%A" e
+            // and print the result of evaluating it
+            //printfn "Result: %f" (eval(e))
+            compute n
+        with err -> 
+            printfn "Invalid"
+            compute (n-1)
 
 // Start interacting with the user
-compute 3
-
-Double.Parse "2,3"
+compute 1000
 
