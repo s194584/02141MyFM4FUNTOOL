@@ -7,13 +7,9 @@ open FM4FUNAST
 %token <int> NUM
 %token <string> VAR
 %token ASSIGN SKIP SEP IF FI DO OD THEN CONS LBRA RBRA PLUS MINUS MULT DIV POW LPAR RPAR TRUE FALSE AND OR SAND SOR NEQ GEQ LEQ EQ GT LT NOT EOF
-// NOTE: the actual formats of these tokens are defined in the lexer file
-//       as regular expressions
 
 // Specify precedence and associativity of operators
 // Precedence is given by the order (from low to high)
-%right SEP CONS
-
 
 // We declare the initial non-terminal symbol
 %start start
@@ -28,57 +24,48 @@ open FM4FUNAST
 // Grammar productions
 %%
 
-// The first production in "formal" notation is
-// start -> expression
-// here written:
 start: C EOF                      { $1 }
 
-// Note that we need to insert an End-Of-File (EOF)
-// The code annotation { $1 } specifies that parsing with this production
-// returns whatever parsing the expression returns: $1 is the result of parsing
-// the first component of the production (i.e. expression)
-
-// The productions for expressions are like in the grammar we saw in class
-// written in the yacc format:
-
 C:
+  | Ca SEP C                      { C($1,$3) }                // C ; C
+  | Ca                            { $1 }                      // (Ca)
+
+Ca:
+  | IF GC FI                      { If($2) }                  // if GC fi
+  | DO GC OD                      { Do($2) }                  // do GC od
   | VAR ASSIGN a0                 { Assign(Var($1),$3) }      // x := a0
   | VAR LBRA a0 RBRA ASSIGN a0    { Assign(Array($1,$3),$6) } // A[a0] := a0
   | SKIP                          { Skip }                    // skip
-  | C SEP C                       { C($1,$3) }                // C ; C
-  | IF GC FI                      { If($2) }                  // if GC fi
-  | DO GC OD                      { Do($2) }                  // do GC od
-// NOT IN USE
-Ca:
-  | LPAR C RPAR                   { $2 }
+  | LPAR C RPAR                   { $2 }                      // (C)
 
 GC:
-  | b0 THEN C                     { Then($1,$3) }             // b0 -> C
-  | GC CONS GC                   { GC($1,$3) }               // GC [] GC
-// NOT IN USE
+  | GCa CONS GC                   { GC($1,$3) }               // GC [] GC
+  | GCa                           { $1 }                      // (GCa)
+
 GCa:
-  | LPAR GC RPAR                  { $2 }
+  | b0 THEN C                     { Then($1,$3) }             // b0 -> C
+  | LPAR GC RPAR                  { $2 }                      // (GC)
 
 // Arithmetic expressions
 // Priority levels 0 | a + a , a - a
 a0:
-  | a0 PLUS a1                     { Plus($1,$3) }             // a0 + a0
-  | a0 MINUS a1                    { Minus($1,$3) }            // a0 - a0
-  | a1                             { $1 }                      // (a1)
+  | a0 PLUS a1                    { Plus($1,$3) }             // a0 + a0
+  | a0 MINUS a1                   { Minus($1,$3) }            // a0 - a0
+  | a1                            { $1 }                      // (a1)
 // Priority levels 1 | a * a , a / a
 a1:
-  | a1 MULT a2                     { Mult($1,$3) }             // a1 * a1
-  | a1 DIV a2                      { Div($1,$3) }              // a1 / a1
-  | a2                             { $1 }                      // (a2)
+  | a1 MULT a2                    { Mult($1,$3) }             // a1 * a1
+  | a1 DIV a2                     { Div($1,$3) }              // a1 / a1
+  | a2                            { $1 }                      // (a2)
 // Priority levels 2 | a ^ a
 a2:
-  | a3 POW a2                      { Pow($1,$3) }              // a2 ^ a2
-  | a3                             { $1 }                      // (a3)
+  | a3 POW a2                     { Pow($1,$3) }              // a2 ^ a2
+  | a3                            { $1 }                      // (a3)
 // Priority levels 3 | -a , rest
 a3:
   | NUM                           { Num($1) }                 // n
   | VAR                           { V(Var($1)) }              // x
-  | VAR LBRA a3 RBRA              { V(Array($1,$3)) }         // A[a3]
+  | VAR LBRA a0 RBRA              { V(Array($1,$3)) }         // A[a3]
   | MINUS a3                      { UMinus($2) }              // -a3
   | LPAR a0 RPAR                  { $2 }                      // (a0)
 

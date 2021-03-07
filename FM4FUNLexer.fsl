@@ -8,18 +8,16 @@ open System
 open FM4FUNParser
 }
 
-// We define macros for some regular expressions we will use later
-// men ikke nogle keywords: if,fi,do,od,skip,true,false
+// Macros for regular expressions:
 let keywords = ("if"|"fi"|"do"|"od"|"skip"|"true"|"false")
 let digit = ['0'-'9']
-let var = (['a'-'z''A'-'Z'](['a'-'z']|['A'-'Z']|digit|'_')*)
+let var = ['a'-'z''A'-'Z'](['a'-'z']|['A'-'Z']|digit|'_')*
 let num = digit+
-let whitespace = [' ' '\n' '\r' '\t']
+let whitespace = ['\u00A0' ' ' '\n' '\r' '\t']
+// OBS: We could not make \u00A0 work with "regular" whitespaces, so 
+// we added ' ' to the regular expression. 
 
-// We define now the rules for recognising and building tokens
-// for each of the tokens of our language we need a rule
-// NOTE: rules are applied in order top-down.
-//       This is important when tokens overlap (not in this example)
+// Rules for each token in our language:
 rule tokenize = parse
 
 // Checking first for keywords with a mandatory whitespace
@@ -65,7 +63,7 @@ rule tokenize = parse
 | "do"              { failwith (sprintf "\"do\" is not allowed here: Char %d" (lexbuf.EndPos.AbsoluteOffset)) }
 | "od"              { failwith (sprintf "\"od\" is not allowed here: Char %d" (lexbuf.EndPos.AbsoluteOffset)) }
 
-// Lastly it checks for variable names. Since the rules
+// Lastly it checks for variable names. Since the rules are applied top-down
 | var               { VAR(LexBuffer<_>.LexemeString lexbuf)}
 | num               { NUM((int) (LexBuffer<_>.LexemeString lexbuf)) }
 | eof               { EOF }
