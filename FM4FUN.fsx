@@ -1,6 +1,6 @@
-// This script implements our interactive calculator
+// This script implements our interactive FM4FUN tool to parse a program.
 
-// We need to import a couple of modules, including the generated lexer and parser
+// Import of modules etc.
 #r "C:/Users/Bruger/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
 open FSharp.Text.Lexing
 open System
@@ -11,18 +11,7 @@ open FM4FUNParser
 #load "FM4FUNLexer.fs"
 open FM4FUNLexer
 
-// We only have to indent when we enter do or if
-// the indentation will be the length from the keyword
-// to the THEN (->) + 1.
-// The end keywords would then reduce the indentation again.
-//      The above could be done with recursion?
-// So we can maybe generate the lines in order. (Array of strings)
-// Then go through calculating the length of the 
-// needed indentation. (Insert space (' ') strings into the correct )
-// Lastly generate the strings and add 'newlines'
-
-// Line change: 1) with every ";" 2) end of "if" and "do" 3) before every "[]"
-
+// Mutally recursive functions to create a string of the parsed program.
 let rec generateCExp cexp =
     match cexp with
     | Assign (x,y) -> "" + generateVar x + ":=" + generateAExp y
@@ -66,27 +55,51 @@ and generateBExp bexp =
  
 let generateList (str:string) = List.ofArray(str.Split('\n'))
 
-let getIndentation (str:string) = 
-    let x::xs = List.ofArray(str.Split("->"))
-    if List.length xs = 1 then String.length x + 3 else 0
+// Increase in indentation happens only when we see "->".
+// If the program is parsed correctly, the mutally recursive functions generateCExp ... generateBExp
+// will ensure that, when we split the string created by these functions at every "\n", each element
+// in the list will contain at most one "->".
+// If we then further split this string element into two (e.g. "if true -> x:=a"), the indentation 
+// for the lines following the "->" must be the length of the first element (in this case "if true ") 
+// plus three (the number of characters in "-> "). Should the element contain no "->", then no further 
+// indentation is nedded. getIndentation calculates this.
+
+let getIndentation (str:string) =
+    match List.ofArray(str.Split("->")) with
+    | x::xs when List.length xs = 1 -> String.length x + 3
+    | _ -> 0
+
+// VERSION 1: 
+// let getIndentation' (str:string) = 
+//    let x::xs = List.ofArray(str.Split("->"))
+//    if List.length xs = 1 then String.length x + 3 else 0
 
 let sum list = List.fold (+) 0 list
 
-let rec addIndentation (list:string list) ind =
+// Parameter "ind" in addIndentation is an int list containing indentation levels.
+// Total indentation is found as a sum of elements in the list.
+
+let rec addIndentation ind (list:string list) =
     match list with
     | x::xs when x.Contains("od") || x.Contains("fi") -> 
         let _ :: temp = ind
-        String.replicate (sum temp) " " + x + "\n" + addIndentation (xs) temp
+        String.replicate (sum temp) " " + x + "\n" + addIndentation temp xs
     | x::xs -> 
         let temp = getIndentation x 
-        String.replicate (sum ind) " " + x + "\n" + addIndentation (xs) (if temp = 0 then ind else temp :: ind)
+        String.replicate (sum ind) " " + x + "\n" + addIndentation (if temp = 0 then ind else temp :: ind) xs
     | [] -> ""
 
+let prettify (cexp:cexp) = addIndentation [0] (generateList (generateCExp cexp))
 
-let prettify (cexp:cexp) = addIndentation (generateList (generateCExp cexp)) [0]
+// For the sake of readability, this version might be better:
+let prettify' cexp =
+    cexp
+    |> generateCExp
+    |> generateList
+    |> addIndentation []
 
-// Method below allows for multiple line input from the user
-// Press enter twice to finish input 
+// Method below allows for multiple-line input from the user.
+// Press enter twice to finish input.
 let rec getInput str = 
     let input = Console.ReadLine()
     match input with
@@ -106,17 +119,17 @@ let rec compute n =
         try
             // We parse the input string
             let res = FM4FUNParser.start FM4FUNLexer.tokenize lexbuf
-            printfn "Compile succes! \n%s" (prettify res)
+            printfn "Compile succes! \n%s" (prettify' res)
             compute n
 
         with err -> 
-            // In case the program is not accepted, some hint are printed
-            // indicating where the error occured
+            // In case the program is not accepted, some hints are printed
+            // indicating where the error occured.
             let endPos = lexbuf.EndPos
             let colPos = endPos.Column
             let lexString = LexBuffer<char>.LexemeString(lexbuf)
             printfn "Parse error at: %A position %A" lexString colPos
             compute (n-1)
 
-// Start interacting with the user
+// Start interacting with the user.
 compute 1000
