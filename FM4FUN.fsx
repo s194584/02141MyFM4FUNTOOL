@@ -1,7 +1,7 @@
 // This script implements our interactive FM4FUN tool to parse a program.
 
 // Import of modules etc.
-#r "C:/Users/Bruger/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
+#r "C:/Users/Jahar/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
 open FSharp.Text.Lexing
 open System
 #load "FM4FUNAST.fs"
@@ -96,7 +96,7 @@ let prettify' cexp =
     cexp
     |> generateCExp
     |> generateList
-    |> addIndentation []
+    |> addIndentation [0]
 
 // Method below allows for multiple-line input from the user.
 // Press enter twice to finish input.
@@ -104,7 +104,7 @@ let rec getInput str =
     let input = Console.ReadLine()
     match input with
     | "" -> str
-    | _ -> getInput (str + input + " ")
+    | _ -> getInput (str + input + "\n")
 
 
 // We implement here the function that interacts with the user
@@ -112,23 +112,24 @@ let rec compute n =
     if n = 0 then
         printfn "Bye bye"
     else
-        printfn "Enter an GCL-command: (Press enter twice to finish input)"
+        printfn "Enter an GCL-command\nThe command cannot have two consecutive newlines\n(Press enter twice to finish input):"
         let input = getInput ""
         let lexbuf = LexBuffer<char>.FromString input
 
         try
             // We parse the input string
             let res = FM4FUNParser.start FM4FUNLexer.tokenize lexbuf
-            printfn "Compile succes! \n%s" (prettify' res)
+            printfn "############### Compile succes! ############### \n%s" (prettify' res)
             compute n
 
         with err -> 
             // In case the program is not accepted, some hints are printed
             // indicating where the error occured.
             let endPos = lexbuf.EndPos
+            let linePos = endPos.Line
             let colPos = endPos.Column
             let lexString = LexBuffer<char>.LexemeString(lexbuf)
-            printfn "Parse error at: %A position %A" lexString colPos
+            printfn "%s\nParse error at: %A line %d col %d\n" (err.Message.ToString()) lexString linePos colPos
             compute (n-1)
 
 // Start interacting with the user.

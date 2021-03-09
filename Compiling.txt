@@ -5,6 +5,7 @@ Malthe:
 "C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fsyacc/net46/fsyacc.exe" FM4FUNParser.fsp --module FM4FUNParser
 ## Run (if added to path)
 fsi.exe FM4FUN.fsx
+dotnet fsi FM4FUN.fsx
 
 Helena:
 C:/Users/Bruger/.nuget/packages/fslexyacc/10.0.0/build/fslex/net46/fslex.exe FM4FUNLexer.fsl --unicode
