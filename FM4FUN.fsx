@@ -120,6 +120,7 @@ let rec compute n =
             // We parse the input string
             let res = FM4FUNParser.start FM4FUNLexer.tokenize lexbuf
             printfn "############### Compile succes! ############### \n%s" (prettify' res)
+            // Get ready for a new input
             compute n
 
         with err -> 
@@ -129,7 +130,8 @@ let rec compute n =
             let linePos = endPos.Line
             let colPos = endPos.Column
             let lexString = LexBuffer<char>.LexemeString(lexbuf)
-            printfn "#### Error at: %A line %d col %d\n" lexString linePos colPos
+            printfn "#### Error around: %A line %d col %d\n" lexString linePos colPos
+            // Get ready for a new input
             compute (n-1)
 
 // Start interacting with the user.
