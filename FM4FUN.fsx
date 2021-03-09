@@ -1,7 +1,9 @@
 // This script implements our interactive FM4FUN tool to parse a program.
 
-// Import of modules etc.
+// Open modules
+// The following should be the path to the "FsLexYacc.Runtime.dll"
 #r "C:/Users/Jahar/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
+
 open FSharp.Text.Lexing
 open System
 #load "FM4FUNAST.fs"
@@ -53,6 +55,7 @@ and generateBExp bexp =
     | Lt (a1,a2) -> generateAExp a1 + "<" + generateAExp a2
     | Leq (a1,a2) -> generateAExp a1 + "<=" + generateAExp a2
  
+// After generating the string from cexp then we split it into lines
 let generateList (str:string) = List.ofArray(str.Split('\n'))
 
 // Increase in indentation happens only when we see "->".
@@ -69,11 +72,7 @@ let getIndentation (str:string) =
     | x::xs when List.length xs = 1 -> String.length x + 3
     | _ -> 0
 
-// VERSION 1: 
-// let getIndentation' (str:string) = 
-//    let x::xs = List.ofArray(str.Split("->"))
-//    if List.length xs = 1 then String.length x + 3 else 0
-
+// The sum of integers in an int list
 let sum list = List.fold (+) 0 list
 
 // Parameter "ind" in addIndentation is an int list containing indentation levels.
@@ -81,29 +80,34 @@ let sum list = List.fold (+) 0 list
 
 let rec addIndentation ind (list:string list) =
     match list with
+    // Reduce indentation and add new
+    | x::xs when x.Contains("[]") -> 
+        let _ :: ys = ind
+        let newInd = (getIndentation x) :: ys
+        String.replicate (sum ys) " " + x + "\n" + addIndentation newInd xs
+    // Reduce indentation
     | x::xs when x.Contains("od") || x.Contains("fi") -> 
-        let _ :: temp = ind
-        String.replicate (sum temp) " " + x + "\n" + addIndentation temp xs
+        let _ :: ys = ind
+        String.replicate (sum ys) " " + x + "\n" + addIndentation ys xs
+    // Keep indentation
     | x::xs -> 
         let temp = getIndentation x 
         String.replicate (sum ind) " " + x + "\n" + addIndentation (if temp = 0 then ind else temp :: ind) xs
     | [] -> ""
 
-let prettify (cexp:cexp) = addIndentation [0] (generateList (generateCExp cexp))
-
 // For the sake of readability, this version might be better:
-let prettify' cexp =
+let prettify cexp =
     cexp
     |> generateCExp
     |> generateList
-    |> addIndentation [0]
+    |> addIndentation []
 
 // Method below allows for multiple-line input from the user.
 // Press enter twice to finish input.
-let rec getInput str = 
+let rec getInput (str:string) = 
     let input = Console.ReadLine()
     match input with
-    | "" -> str
+    | "" -> str.Substring(0,str.Length-1)
     | _ -> getInput (str + input + "\n")
 
 
@@ -115,11 +119,10 @@ let rec compute n =
         printfn "Enter an GCL-command\nThe command cannot have two consecutive newlines\n(Press enter twice to finish input):"
         let input = getInput ""
         let lexbuf = LexBuffer<char>.FromString input
-
         try
             // We parse the input string
             let res = FM4FUNParser.start FM4FUNLexer.tokenize lexbuf
-            printfn "############### Compile succes! ############### \n%s" (prettify' res)
+            printfn "############### Parsing successful! ############### \n%s" (prettify res)
             // Get ready for a new input
             compute n
 

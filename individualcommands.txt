@@ -10,11 +10,3 @@ dotnet fsi FM4FUN.fsx
 Helena:
 C:/Users/Bruger/.nuget/packages/fslexyacc/10.0.0/build/fslex/net46/fslex.exe FM4FUNLexer.fsl --unicode
 C:/Users/Bruger/.nuget/packages/fslexyacc/10.0.0/build/fsyacc/net46/fsyacc.exe FM4FUNParser.fsp --module FM4FUNParser
-
-
-
-
-
-i:=0;x:=0;y:=0;do (n>i)&&(A[i]>=0) -> x:=x+A[i]; y:=y+1; i:=i+1[] (n>i)&&(0>A[i]) -> i:=i+1 od;x:=x/y
-
-y:=1;do x>0 -> do :=x*y;          x:=x-1 od
