@@ -107,7 +107,7 @@ let rec getInput str =
     | _ -> getInput (str + input + "\n")
 
 
-// We implement here the function that interacts with the user
+// We implement here the function that interacts with the user with n tries
 let rec compute n =
     if n = 0 then
         printfn "Bye bye"
@@ -129,8 +129,8 @@ let rec compute n =
             let linePos = endPos.Line
             let colPos = endPos.Column
             let lexString = LexBuffer<char>.LexemeString(lexbuf)
-            printfn "%s\nParse error at: %A line %d col %d\n" (err.Message.ToString()) lexString linePos colPos
+            printfn "#### Error at: %A line %d col %d\n" lexString linePos colPos
             compute (n-1)
 
 // Start interacting with the user.
-compute 1000
+compute 10

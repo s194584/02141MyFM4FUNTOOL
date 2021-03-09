@@ -29,6 +29,8 @@ rule tokenize = parse
 | newline "fi"   { lexbuf.EndPos <- lexbuf.EndPos.NextLine; FI }
 | "do" newline   { lexbuf.EndPos <- lexbuf.EndPos.NextLine; DO }
 | newline "od"   { lexbuf.EndPos <- lexbuf.EndPos.NextLine; OD }
+
+// If the whitespaces are not newlines
 | "if" whitespace   { IF }
 | whitespace "fi"   { FI }
 | "do" whitespace   { DO }
@@ -66,16 +68,16 @@ rule tokenize = parse
 | '!'               { NOT }
 
 // Throws an error saying that if,fi,do,od is not allowed here.
-| "if"              { failwith (sprintf "\"if\" is not allowed here: line %d col %d" (lexbuf.EndPos.Line) (lexbuf.EndPos.Column)) }
-| "fi"              { failwith (sprintf "\"fi\" is not allowed here: line %d col %d" (lexbuf.EndPos.Line) (lexbuf.EndPos.Column)) }
-| "do"              { failwith (sprintf "\"do\" is not allowed here: line %d col %d" (lexbuf.EndPos.Line) (lexbuf.EndPos.Column)) }
-| "od"              { failwith (sprintf "\"od\" is not allowed here: line %d col %d" (lexbuf.EndPos.Line) (lexbuf.EndPos.Column)) }
+| "if"              { INVALID }
+| "fi"              { INVALID }
+| "do"              { INVALID }
+| "od"              { INVALID }
 
 // Lastly it checks for variable names. Since the rules are applied top-down
 | var               { VAR(LexBuffer<_>.LexemeString lexbuf)}
 | num               { NUM((int) (LexBuffer<_>.LexemeString lexbuf)) }
 | eof               { EOF }
-| _                 { failwith (sprintf "Unknown failure at: line %d col %d"  (lexbuf.EndPos.Line) (lexbuf.EndPos.Column)) }
+| _                 { INVALID }
 
 
 

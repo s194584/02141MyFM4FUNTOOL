@@ -170,227 +170,227 @@ let rec _fslex_dummy () = _fslex_dummy()
 and tokenize  lexbuf =
   match _fslex_tables.Interpret(0,lexbuf) with
   | 0 -> ( 
-# 25 "FM4FUNLexer.fsl"
+# 28 "FM4FUNLexer.fsl"
                                   lexbuf.EndPos <- lexbuf.EndPos.NextLine; IF 
 # 175 "FM4FUNLexer.fs"
           )
   | 1 -> ( 
-# 26 "FM4FUNLexer.fsl"
+# 29 "FM4FUNLexer.fsl"
                                   lexbuf.EndPos <- lexbuf.EndPos.NextLine; FI 
 # 180 "FM4FUNLexer.fs"
           )
   | 2 -> ( 
-# 27 "FM4FUNLexer.fsl"
+# 30 "FM4FUNLexer.fsl"
                                   lexbuf.EndPos <- lexbuf.EndPos.NextLine; DO 
 # 185 "FM4FUNLexer.fs"
           )
   | 3 -> ( 
-# 28 "FM4FUNLexer.fsl"
+# 31 "FM4FUNLexer.fsl"
                                   lexbuf.EndPos <- lexbuf.EndPos.NextLine; OD 
 # 190 "FM4FUNLexer.fs"
           )
   | 4 -> ( 
-# 29 "FM4FUNLexer.fsl"
+# 32 "FM4FUNLexer.fsl"
                                      IF 
 # 195 "FM4FUNLexer.fs"
           )
   | 5 -> ( 
-# 30 "FM4FUNLexer.fsl"
+# 33 "FM4FUNLexer.fsl"
                                      FI 
 # 200 "FM4FUNLexer.fs"
           )
   | 6 -> ( 
-# 31 "FM4FUNLexer.fsl"
+# 34 "FM4FUNLexer.fsl"
                                      DO 
 # 205 "FM4FUNLexer.fs"
           )
   | 7 -> ( 
-# 32 "FM4FUNLexer.fsl"
+# 35 "FM4FUNLexer.fsl"
                                      OD 
 # 210 "FM4FUNLexer.fs"
           )
   | 8 -> ( 
-# 35 "FM4FUNLexer.fsl"
+# 38 "FM4FUNLexer.fsl"
                                      lexbuf.EndPos <- lexbuf.EndPos.NextLine; tokenize lexbuf; 
 # 215 "FM4FUNLexer.fs"
           )
   | 9 -> ( 
-# 36 "FM4FUNLexer.fsl"
+# 39 "FM4FUNLexer.fsl"
                                      tokenize lexbuf 
 # 220 "FM4FUNLexer.fs"
           )
   | 10 -> ( 
-# 37 "FM4FUNLexer.fsl"
+# 40 "FM4FUNLexer.fsl"
                                      ASSIGN 
 # 225 "FM4FUNLexer.fs"
           )
   | 11 -> ( 
-# 38 "FM4FUNLexer.fsl"
+# 41 "FM4FUNLexer.fsl"
                                      SKIP 
 # 230 "FM4FUNLexer.fs"
           )
   | 12 -> ( 
-# 39 "FM4FUNLexer.fsl"
+# 42 "FM4FUNLexer.fsl"
                                      SEP 
 # 235 "FM4FUNLexer.fs"
           )
   | 13 -> ( 
-# 40 "FM4FUNLexer.fsl"
+# 43 "FM4FUNLexer.fsl"
                                      THEN 
 # 240 "FM4FUNLexer.fs"
           )
   | 14 -> ( 
-# 41 "FM4FUNLexer.fsl"
+# 44 "FM4FUNLexer.fsl"
                                      CONS 
 # 245 "FM4FUNLexer.fs"
           )
   | 15 -> ( 
-# 42 "FM4FUNLexer.fsl"
+# 45 "FM4FUNLexer.fsl"
                                      LBRA 
 # 250 "FM4FUNLexer.fs"
           )
   | 16 -> ( 
-# 43 "FM4FUNLexer.fsl"
+# 46 "FM4FUNLexer.fsl"
                                      RBRA 
 # 255 "FM4FUNLexer.fs"
           )
   | 17 -> ( 
-# 44 "FM4FUNLexer.fsl"
+# 47 "FM4FUNLexer.fsl"
                                      PLUS 
 # 260 "FM4FUNLexer.fs"
           )
   | 18 -> ( 
-# 45 "FM4FUNLexer.fsl"
+# 48 "FM4FUNLexer.fsl"
                                      MINUS 
 # 265 "FM4FUNLexer.fs"
           )
   | 19 -> ( 
-# 46 "FM4FUNLexer.fsl"
+# 49 "FM4FUNLexer.fsl"
                                      MULT 
 # 270 "FM4FUNLexer.fs"
           )
   | 20 -> ( 
-# 47 "FM4FUNLexer.fsl"
+# 50 "FM4FUNLexer.fsl"
                                      DIV 
 # 275 "FM4FUNLexer.fs"
           )
   | 21 -> ( 
-# 48 "FM4FUNLexer.fsl"
+# 51 "FM4FUNLexer.fsl"
                                      POW 
 # 280 "FM4FUNLexer.fs"
           )
   | 22 -> ( 
-# 49 "FM4FUNLexer.fsl"
+# 52 "FM4FUNLexer.fsl"
                                      LPAR 
 # 285 "FM4FUNLexer.fs"
           )
   | 23 -> ( 
-# 50 "FM4FUNLexer.fsl"
+# 53 "FM4FUNLexer.fsl"
                                      RPAR 
 # 290 "FM4FUNLexer.fs"
           )
   | 24 -> ( 
-# 51 "FM4FUNLexer.fsl"
+# 54 "FM4FUNLexer.fsl"
                                      TRUE 
 # 295 "FM4FUNLexer.fs"
           )
   | 25 -> ( 
-# 52 "FM4FUNLexer.fsl"
+# 55 "FM4FUNLexer.fsl"
                                      FALSE 
 # 300 "FM4FUNLexer.fs"
           )
   | 26 -> ( 
-# 53 "FM4FUNLexer.fsl"
+# 56 "FM4FUNLexer.fsl"
                                      SAND 
 # 305 "FM4FUNLexer.fs"
           )
   | 27 -> ( 
-# 54 "FM4FUNLexer.fsl"
+# 57 "FM4FUNLexer.fsl"
                                      SOR 
 # 310 "FM4FUNLexer.fs"
           )
   | 28 -> ( 
-# 55 "FM4FUNLexer.fsl"
+# 58 "FM4FUNLexer.fsl"
                                      AND 
 # 315 "FM4FUNLexer.fs"
           )
   | 29 -> ( 
-# 56 "FM4FUNLexer.fsl"
+# 59 "FM4FUNLexer.fsl"
                                      OR 
 # 320 "FM4FUNLexer.fs"
           )
   | 30 -> ( 
-# 57 "FM4FUNLexer.fsl"
+# 60 "FM4FUNLexer.fsl"
                                      NEQ 
 # 325 "FM4FUNLexer.fs"
           )
   | 31 -> ( 
-# 58 "FM4FUNLexer.fsl"
+# 61 "FM4FUNLexer.fsl"
                                      GEQ 
 # 330 "FM4FUNLexer.fs"
           )
   | 32 -> ( 
-# 59 "FM4FUNLexer.fsl"
+# 62 "FM4FUNLexer.fsl"
                                      LEQ 
 # 335 "FM4FUNLexer.fs"
           )
   | 33 -> ( 
-# 60 "FM4FUNLexer.fsl"
+# 63 "FM4FUNLexer.fsl"
                                      EQ 
 # 340 "FM4FUNLexer.fs"
           )
   | 34 -> ( 
-# 61 "FM4FUNLexer.fsl"
+# 64 "FM4FUNLexer.fsl"
                                      GT 
 # 345 "FM4FUNLexer.fs"
           )
   | 35 -> ( 
-# 62 "FM4FUNLexer.fsl"
+# 65 "FM4FUNLexer.fsl"
                                      LT 
 # 350 "FM4FUNLexer.fs"
           )
   | 36 -> ( 
-# 63 "FM4FUNLexer.fsl"
+# 66 "FM4FUNLexer.fsl"
                                      NOT 
 # 355 "FM4FUNLexer.fs"
           )
   | 37 -> ( 
-# 67 "FM4FUNLexer.fsl"
-                                     failwith (sprintf "\"if\" is not allowed here: line %d col %d" (lexbuf.EndPos.pos_lnum) (lexbuf.EndPos.Column)) 
+# 69 "FM4FUNLexer.fsl"
+                                     INVALID 
 # 360 "FM4FUNLexer.fs"
           )
   | 38 -> ( 
-# 68 "FM4FUNLexer.fsl"
-                                     failwith (sprintf "\"fi\" is not allowed here: line %d col %d" (lexbuf.EndPos.Line) (lexbuf.EndPos.Column)) 
+# 70 "FM4FUNLexer.fsl"
+                                     INVALID 
 # 365 "FM4FUNLexer.fs"
           )
   | 39 -> ( 
-# 69 "FM4FUNLexer.fsl"
-                                     failwith (sprintf "\"do\" is not allowed here: line %d col %d" (lexbuf.EndPos.Line) (lexbuf.EndPos.Column)) 
+# 71 "FM4FUNLexer.fsl"
+                                     INVALID 
 # 370 "FM4FUNLexer.fs"
           )
   | 40 -> ( 
-# 70 "FM4FUNLexer.fsl"
-                                     failwith (sprintf "\"od\" is not allowed here: line %d col %d" (lexbuf.EndPos.Line) (lexbuf.EndPos.Column)) 
+# 72 "FM4FUNLexer.fsl"
+                                     INVALID 
 # 375 "FM4FUNLexer.fs"
           )
   | 41 -> ( 
-# 73 "FM4FUNLexer.fsl"
+# 75 "FM4FUNLexer.fsl"
                                      VAR(LexBuffer<_>.LexemeString lexbuf)
 # 380 "FM4FUNLexer.fs"
           )
   | 42 -> ( 
-# 74 "FM4FUNLexer.fsl"
+# 76 "FM4FUNLexer.fsl"
                                      NUM((int) (LexBuffer<_>.LexemeString lexbuf)) 
 # 385 "FM4FUNLexer.fs"
           )
   | 43 -> ( 
-# 75 "FM4FUNLexer.fsl"
+# 77 "FM4FUNLexer.fsl"
                                      EOF 
 # 390 "FM4FUNLexer.fs"
           )
   | 44 -> ( 
-# 76 "FM4FUNLexer.fsl"
+# 78 "FM4FUNLexer.fsl"
                                      failwith (sprintf "Unknown failure at: line %d col %d"  (lexbuf.EndPos.Line) (lexbuf.EndPos.Column)) 
 # 395 "FM4FUNLexer.fs"
           )

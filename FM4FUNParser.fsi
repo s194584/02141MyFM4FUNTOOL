@@ -33,6 +33,7 @@ type token =
   | LT
   | NOT
   | EOF
+  | INVALID
   | VAR of (string)
   | NUM of (int)
 type tokenId = 
@@ -68,6 +69,7 @@ type tokenId =
     | TOKEN_LT
     | TOKEN_NOT
     | TOKEN_EOF
+    | TOKEN_INVALID
     | TOKEN_VAR
     | TOKEN_NUM
     | TOKEN_end_of_input
