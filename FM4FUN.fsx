@@ -2,7 +2,7 @@
 
 // Open modules
 // The following should be the path to the "FsLexYacc.Runtime.dll"
-#r "C:/Users/Jahar/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
+#r "C:/Users/Bruger/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
 
 open FSharp.Text.Lexing
 open System
@@ -12,6 +12,8 @@ open FM4FUNAST
 open FM4FUNParser
 #load "FM4FUNLexer.fs"
 open FM4FUNLexer
+#load "FM4FUNCompiler.fs"
+open FM4FUNCompiler
 
 // Mutally recursive functions to create a string of the parsed program.
 let rec generateCExp cexp =
@@ -122,7 +124,8 @@ let rec compute n =
         try
             // We parse the input string
             let res = FM4FUNParser.start FM4FUNLexer.tokenize lexbuf
-            printfn "############### Parsing successful! ############### \n%s" (prettify res)
+            printfn "############### Parsing successful! ############### \n%s" (prettify res) 
+            printfn "############### Program Graph! ############### \n%A" (FM4FUNCompiler.constructPG res)             
             // Get ready for a new input
             compute n
 
