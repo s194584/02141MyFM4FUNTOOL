@@ -45,17 +45,17 @@ and generateBExp bexp =
     match bexp with
     | True -> "true"
     | False -> "false"
-    | SAnd (b1,b2) -> generateBExp b1 + "&&" + generateBExp b2
-    | SOr (b1,b2) -> generateBExp b1 + "||" + generateBExp b2
-    | And (b1,b2) -> generateBExp b1 + "&" + generateBExp b2
-    | Or (b1,b2) -> generateBExp b1 + "|" + generateBExp b2
-    | Not b -> "!" + generateBExp b
-    | Eq (a1,a2) -> generateAExp a1 + "=" + generateAExp a2
-    | Neq (a1,a2) -> generateAExp a1 + "!=" + generateAExp a2
-    | Gt (a1,a2) -> generateAExp a1 + ">" + generateAExp a2
-    | Geq (a1,a2) -> generateAExp a1 + ">=" + generateAExp a2
-    | Lt (a1,a2) -> generateAExp a1 + "<" + generateAExp a2
-    | Leq (a1,a2) -> generateAExp a1 + "<=" + generateAExp a2
+    | SAnd (b1,b2) -> "(" + generateBExp b1 + "&&" + generateBExp b2 + ")"
+    | SOr (b1,b2) -> "(" + generateBExp b1 + "||" + generateBExp b2 + ")"
+    | And (b1,b2) -> "(" + generateBExp b1 + "&" + generateBExp b2 + ")"
+    | Or (b1,b2) -> "(" + generateBExp b1 + "|" + generateBExp b2 + ")"
+    | Not b -> "!" + "(" + generateBExp b + ")"
+    | Eq (a1,a2) -> "(" + generateAExp a1 + "=" + generateAExp a2 + ")"
+    | Neq (a1,a2) -> "(" + generateAExp a1 + "!=" + generateAExp a2 + ")"
+    | Gt (a1,a2) -> "(" + generateAExp a1 + ">" + generateAExp a2 + ")"
+    | Geq (a1,a2) -> "(" + generateAExp a1 + ">=" + generateAExp a2 + ")"
+    | Lt (a1,a2) -> "(" + generateAExp a1 + "<" + generateAExp a2 + ")"
+    | Leq (a1,a2) -> "(" + generateAExp a1 + "<=" + generateAExp a2 + ")"
  
 // After generating the string from cexp then we split it into lines
 let generateList (str:string) = List.ofArray(str.Split('\n'))
@@ -104,6 +104,26 @@ let prettify cexp =
     |> generateList
     |> addIndentation []
 
+(* Generate graph to .gv file *)
+let actToString act = 
+    match act with
+    | A a -> generateCExp a
+    | B b -> generateBExp b
+    | S s -> generateCExp s
+
+let edgeToString (E((N startStr), act, (N endStr))) = startStr + " -> " + endStr + " [label = \"" + actToString act + "\"];"   
+  
+let edgesToString elist = List.fold (fun a e -> a + edgeToString e + "\n") "" elist
+
+(* Double circle on end node 
+   Read edges as in gv-file *)
+let prettifyPG (_, _, _, elist) = 
+    let prefix = "digraph program_graph {rankdir=LR; \nnode [shape = circle]\n"
+    let postfix = "}"
+    let edges = edgesToString elist
+    prefix + edges + postfix
+
+
 // Method below allows for multiple-line input from the user.
 // Press enter twice to finish input.
 let rec getInput (str:string) = 
@@ -125,7 +145,8 @@ let rec compute n =
             // We parse the input string
             let res = FM4FUNParser.start FM4FUNLexer.tokenize lexbuf
             printfn "############### Parsing successful! ############### \n%s" (prettify res) 
-            printfn "############### Program Graph! ############### \n%A" (FM4FUNCompiler.constructPG res)             
+            printfn "############### Program Graph! ############### \n%A" (FM4FUNCompiler.constructPG res Det)
+            printfn "############### graph Viz version! ############### \n%s" (prettifyPG (FM4FUNCompiler.constructPG res Det))            
             // Get ready for a new input
             compute n
 
