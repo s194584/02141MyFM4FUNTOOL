@@ -15,7 +15,7 @@ To compile the parser use the following command: \
 {path-to "fsyacc.exe"} FM4FUNParser.fsp --module FM4FUNParser
 
 # Running
-First update the path at the top of the FM4FUN.fsx file to match your path to the FsLexYacc.Runtime.dll
+First update the path at the top of the FM4FUN.fsx file to match your path to the FsLexYacc.Runtime.dll \
 To run the program, you need to run the FM4FUN.fsx like you normally would.
 We used: \
 dotnet fsi FM4FUN.fsx
