@@ -2,7 +2,7 @@
 
 // Open modules
 // The following should be the path to the "FsLexYacc.Runtime.dll"
-#r "C:/Users/Bruger/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
+#r "C:/Users/krist/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
 
 open FSharp.Text.Lexing
 open System
@@ -146,15 +146,23 @@ let rec compute n =
     if n = 0 then
         printfn "Bye bye"
     else
-        printfn "Enter an GCL-command\nThe command cannot have two consecutive newlines\n(Press enter twice to finish input):"
+        printfn "\nEnter an GCL-command\nThe command cannot have two consecutive newlines\n(Press enter twice to finish input):"
         let input = getInput ""
         let lexbuf = LexBuffer<char>.FromString input
         try
             // We parse the input string
             let res = FM4FUNParser.start FM4FUNLexer.tokenize lexbuf
             printfn "############### Parsing successful! ############### \n%s" (prettify res) 
-            printfn "############### Program Graph! ############### \n%A" (FM4FUNCompiler.constructPG res Det)
-            printfn "############### graph Viz version! ############### \n%s" (prettifyPG (FM4FUNCompiler.constructPG res Det))            
+            printfn "Do you want to create a program graph? \nDet / NonDet / No"
+            match Console.ReadLine() with 
+                | "Det" -> let pg = FM4FUNCompiler.constructPG res Det
+                           printfn "\n############### F# type Program Graph! ############### \n%A" pg
+                           printfn "\n############### Graphviz version! ############### \n%s\n" (prettifyPG pg)    
+                | "NonDet" -> let pg = FM4FUNCompiler.constructPG res NonDet
+                              printfn "\n############### F# type Program Graph! ############### \n%A" pg
+                              printfn "\n############### Graphviz version! ############### \n%s\n" (prettifyPG pg)                 
+                | _ -> ()
+            
             // Get ready for a new input
             compute n
 
