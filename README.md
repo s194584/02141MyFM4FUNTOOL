@@ -1,8 +1,8 @@
 # Key files
-FM4FUN.fsx
-FM4FUNAST.fs
-FM4FUNLexer.fsl
-FM4FUNParser.fsp
+FM4FUN.fsx \
+FM4FUNAST.fs \
+FM4FUNLexer.fsl \
+FM4FUNParser.fsp \
 FM4FUNCompiler.fs
 
 # Installing
