@@ -1,22 +1,26 @@
 module FM4FUNCompiler
 open FM4FUNAST
 
-(* Create edges function (both deterministic and non-deterministic version) 
-   Create done function 
-   Create new, fresh nodes *)
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////// THIS IS FOR TASK 2 ///////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+// Type definitions for program graph components
 type Act = B of bexp | S of cexp | A of cexp
 type Node = N of string
 type Edges = E of (Node * Act * Node)
 type PG = (Node list * (Node * Node) * Act list * Edges list)
 type PGType = Det | NonDet
 
+// Done function (as defined in [Formal Methods, Chapter 2.2 p. 19])
 let rec doneGC gcexp = 
     match gcexp with
     | Then (b,_) -> Not b
     | GC (gc1, gc2) -> And (doneGC gc1, doneGC gc2)
 
-(* Non-deterministic version of edges function *)
+// Non-deterministic version of edges function (as defined in [Formal Methods, Chapter 2.2 p. 18])
+// Modified to also collect actions and nodes, and be tail recursive. 
 let rec edgesC startNode endNode cexp i qSet aSet eSet =
     match cexp with
     | If gc -> edgesGC startNode endNode gc i qSet aSet eSet
@@ -43,7 +47,8 @@ and edgesGC startNode endNode gcexp i qSet aSet eSet =
                    let (n, qSet1, aSet1, E1) = edgesGC startNode endNode gc1 i qSet aSet eSet
                    edgesGC startNode endNode gc2 n qSet1 aSet1 E1
 
-(* Deterministic version of edges function *)
+// Deterministic version of edges function (modified as in [Formal Methods, Chapter 2.4 p. 25])
+// Modified to also collect actions and nodes, and be tail recursive. 
 let rec edgesCD startNode endNode cexp i qSet aSet eSet d =
     match cexp with
     | If gc -> edgesGCD startNode endNode gc i qSet aSet eSet False
@@ -69,6 +74,7 @@ and edgesGCD startNode endNode gcexp i qSet aSet eSet d =
                    let (n, qSet1, aSet1, E1, d1) = edgesGCD startNode endNode gc1 i qSet aSet eSet d
                    edgesGCD startNode endNode gc2 n qSet1 aSet1 E1 d1
 
+// Function to determine whether graph should be deterministic or non-deterministic
 let edges cexp flag = 
     match flag with
     | Det -> let (i, qSet, aSet, eSet, d) = edgesCD (N("qstart")) (N("qend")) cexp 1 (Set.ofList []) (Set.ofList []) (Set.ofList []) False
@@ -76,7 +82,12 @@ let edges cexp flag =
     | NonDet -> let (i, qSet, aSet, eSet) = edgesC (N("qstart")) (N("qend")) cexp 1 (Set.ofList []) (Set.ofList []) (Set.ofList [])
                 (qSet, aSet, eSet)
 
-
+// Funtion for computing program graph (as defined in [Formal Methods, Chapter 1.1 p. 2])
 let constructPG cexp flag =
     let (qSet, aSet, eSet) = edges cexp flag
     (N("qstart")::N("qend")::(Set.toList qSet), (N("qstart"), N("qend")), Set.toList aSet, Set.toList eSet)
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  

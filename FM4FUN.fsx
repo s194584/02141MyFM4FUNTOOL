@@ -1,4 +1,4 @@
-// This script implements our interactive FM4FUN tool to parse a program.
+// This script implements our interactive FM4FUN tool to parse a program
 
 // Open modules
 // The following should be the path to the "FsLexYacc.Runtime.dll"
@@ -15,7 +15,7 @@ open FM4FUNLexer
 #load "FM4FUNCompiler.fs"
 open FM4FUNCompiler
 
-// Mutally recursive functions to create a string of the parsed program.
+// Mutally recursive functions to create a string of the parsed program
 let rec generateCExp cexp =
     match cexp with
     | Assign (x,y) -> "" + generateVar x + ":=" + generateAExp y
@@ -77,8 +77,8 @@ let getIndentation (str:string) =
 // The sum of integers in an int list
 let sum list = List.fold (+) 0 list
 
-// Parameter "ind" in addIndentation is an int list containing indentation levels.
-// Total indentation is found as a sum of elements in the list.
+// Parameter "ind" in addIndentation is an int list containing indentation levels
+// Total indentation is found as a sum of elements in the list
 
 let rec addIndentation ind (list:string list) =
     match list with
@@ -97,35 +97,43 @@ let rec addIndentation ind (list:string list) =
         String.replicate (sum ind) " " + x + "\n" + addIndentation (if temp = 0 then ind else temp :: ind) xs
     | [] -> ""
 
-// For the sake of readability, this version might be better:
+// Prettify the abstract syntax tree
 let prettify cexp =
     cexp
     |> generateCExp
     |> generateList
     |> addIndentation []
+    
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////// THIS IS FOR TASK 2 ///////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-(* Generate graph to .gv file *)
+// Generate edge label 
 let actToString act = 
     match act with
     | A a -> generateCExp a
     | B b -> generateBExp b
     | S s -> generateCExp s
 
+// Generate graphviz edge string
 let edgeToString (E((N startStr), act, (N endStr))) = startStr + " -> " + endStr + " [label = \"" + actToString act + "\"];"   
-  
+
+// Collect all graphviz edge strings
 let edgesToString elist = List.fold (fun a e -> a + edgeToString e + "\n") "" elist
 
-(* Double circle on end node 
-   Read edges as in gv-file *)
+// Generate graphviz code from PG
 let prettifyPG (_, _, _, elist) = 
     let prefix = "digraph program_graph {rankdir=LR; \nnode [shape = circle]\n"
     let postfix = "}"
     let edges = edgesToString elist
     prefix + edges + postfix
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
 
-// Method below allows for multiple-line input from the user.
-// Press enter twice to finish input.
+// Method below allows for multiple-line input from the user
+// Press enter twice to finish input
 let rec getInput (str:string) = 
     let input = Console.ReadLine()
     match input with
@@ -152,7 +160,7 @@ let rec compute n =
 
         with err -> 
             // In case the program is not accepted, some hints are printed
-            // indicating where the error occured.
+            // indicating where the error occured
             let endPos = lexbuf.EndPos
             let linePos = endPos.Line
             let colPos = endPos.Column
@@ -161,5 +169,5 @@ let rec compute n =
             // Get ready for a new input
             compute (n-1)
 
-// Start interacting with the user.
+// Start interacting with the user
 compute 10
