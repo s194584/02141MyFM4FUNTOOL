@@ -2,7 +2,7 @@
 
 // Open modules
 // The following should be the path to the "FsLexYacc.Runtime.dll"
-#r "C:/Users/krist/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
+#r "C:/Users/Bruger/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
 
 open FSharp.Text.Lexing
 open System
@@ -14,6 +14,12 @@ open FM4FUNParser
 open FM4FUNLexer
 #load "FM4FUNCompiler.fs"
 open FM4FUNCompiler
+#load "FM4FUNInterpreter.fs"
+open FM4FUNInterpreter
+#load "UserInputLexer.fs"
+open UserInputLexer
+
+type Status = Terminated | Stuck
 
 // Mutally recursive functions to create a string of the parsed program
 let rec generateCExp cexp =
@@ -113,10 +119,10 @@ let actToString act =
     match act with
     | A a -> generateCExp a
     | B b -> generateBExp b
-    | S s -> generateCExp s
+    | S -> "skip"
 
 // Generate graphviz edge string
-let edgeToString (E((N startStr), act, (N endStr))) = startStr + " -> " + endStr + " [label = \"" + actToString act + "\"];"   
+let edgeToString ((N startStr), act, (N endStr)) = startStr + " -> " + endStr + " [label = \"" + actToString act + "\"];"   
 
 // Collect all graphviz edge strings
 let edgesToString elist = List.fold (fun a e -> a + edgeToString e + "\n") "" elist
@@ -140,6 +146,53 @@ let rec getInput (str:string) =
     | "" -> str.Substring(0,str.Length-1)
     | _ -> getInput (str + input + "\n")
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////// THIS IS FOR TASK 3 ///////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+let rec initializeMemory res mem = 
+    match res with
+    | C (c1,c2) -> initializeMemory c1 (initializeMemory c2 mem)
+    | Assign (Var v,Num i) -> Map.add v i mem
+    | _ -> failwith "Wrong use case of function"
+
+let makeInputVariables (str:string) = 
+    let lexbuf = LexBuffer<char>.FromString str
+    let res = FM4FUNParser.start UserInputLexer.tokenize lexbuf
+    initializeMemory res (Map.ofList [])
+
+let isWellDefinedMemory variables mem = List.forall (fun x -> Map.containsKey x mem) variables
+
+let defineTag input = 
+    match input with
+    | "Det" -> Det
+    | "NonDet" -> NonDet
+    | _ -> Undef
+
+let findOutgoingEdges elist node = List.filter (fun (qstart,_,_) -> node = qstart) elist
+
+let rec findNext elist mem = 
+    if elist = [] then failwith "Stuck" 
+    else
+        let (_,act,qend)::es = elist
+        try
+            (semantics act mem, qend)
+        with err -> 
+            findNext es mem
+
+let executePG (_,(qstart,qend),_,elist) mem = 
+    let rec execute node mem = 
+        let outgoingEdges = findOutgoingEdges elist node
+        try
+            let (newMem, qnext) = findNext outgoingEdges mem
+            execute qnext newMem
+        with err ->
+            if node = qend then (Terminated, node, mem) else (Stuck, node, mem)
+    execute qstart mem
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
 
 // We implement here the function that interacts with the user with n tries
 let rec compute n =
@@ -149,20 +202,31 @@ let rec compute n =
         printfn "\nEnter an GCL-command\nThe command cannot have two consecutive newlines\n(Press enter twice to finish input):"
         let input = getInput ""
         let lexbuf = LexBuffer<char>.FromString input
+        printf "Enter initial values for all variables in your program:\n"
+        let initialValues = Console.ReadLine()
+
         try
-            // We parse the input string
+            // Create memory
+            let mem = makeInputVariables initialValues
+
+            // Parsing input string
             let res = FM4FUNParser.start FM4FUNLexer.tokenize lexbuf
-            printfn "############### Parsing successful! ############### \n%s" (prettify res) 
-            printfn "Do you want to create a program graph? \nDet / NonDet / No"
-            match Console.ReadLine() with 
-                | "Det" -> let pg = FM4FUNCompiler.constructPG res Det
-                           printfn "\n############### F# type Program Graph! ############### \n%A" pg
-                           printfn "\n############### Graphviz version! ############### \n%s\n" (prettifyPG pg)    
-                | "NonDet" -> let pg = FM4FUNCompiler.constructPG res NonDet
-                              printfn "\n############### F# type Program Graph! ############### \n%A" pg
-                              printfn "\n############### Graphviz version! ############### \n%s\n" (prettifyPG pg)                 
-                | _ -> ()
-            
+            printfn "\nDo you want to create a program graph? \nDet / NonDet / No"
+            let tag = defineTag (Console.ReadLine())
+
+            let pg = FM4FUNCompiler.constructPG res tag
+
+            // Check if all variables in program have initial values
+            let variables = findVariables pg
+            if not (isWellDefinedMemory (Set.toList variables) mem) then failwith "Memory not well defined"
+
+            printfn "\n############### Parsing successful! ############### \n%s" (prettify res) 
+
+            printf "Memory:\n%A\n" (executePG pg mem)
+
+            printfn "\n############### F# type Program Graph! ############### \n%A" pg
+            printfn "\n############### Graphviz version! ############### \n%s\n" (prettifyPG pg)
+
             // Get ready for a new input
             compute n
 
