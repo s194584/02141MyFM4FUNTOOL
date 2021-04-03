@@ -2,24 +2,34 @@
 
 // Open modules
 // The following should be the path to the "FsLexYacc.Runtime.dll"
-#r "C:/Users/Bruger/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
+#r "C:/Users/Jahar/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
 
 open FSharp.Text.Lexing
 open System
+
 #load "FM4FUNAST.fs"
 open FM4FUNAST
 #load "FM4FUNParser.fs"
 open FM4FUNParser
 #load "FM4FUNLexer.fs"
 open FM4FUNLexer
+
 #load "FM4FUNCompiler.fs"
 open FM4FUNCompiler
 #load "FM4FUNInterpreter.fs"
 open FM4FUNInterpreter
+
+#load "UserInputAST.fs"
+open UserInputAST
+#load "UserInputParser.fs"
+open UserInputParser
 #load "UserInputLexer.fs"
 open UserInputLexer
 
 type Status = Terminated | Stuck
+
+exception MemoryNotWellDefined of string
+
 
 // Mutally recursive functions to create a string of the parsed program
 let rec generateCExp cexp =
@@ -59,7 +69,7 @@ and generateBExp bexp =
     | Eq (a1,a2) -> "(" + generateAExp a1 + "=" + generateAExp a2 + ")"
     | Neq (a1,a2) -> "(" + generateAExp a1 + "!=" + generateAExp a2 + ")"
     | Gt (a1,a2) -> "(" + generateAExp a1 + ">" + generateAExp a2 + ")"
-    | Geq (a1,a2) -> "(" + generateAExp a1 + ">=" + generateAExp a2 + ")"
+    | Geq (a1,a2) ->  "(" + generateAExp a1 + ">=" + generateAExp a2 + ")"
     | Lt (a1,a2) -> "(" + generateAExp a1 + "<" + generateAExp a2 + ")"
     | Leq (a1,a2) -> "(" + generateAExp a1 + "<=" + generateAExp a2 + ")"
  
@@ -150,18 +160,33 @@ let rec getInput (str:string) =
 ///////////////////////////////////////////////////////////////////// THIS IS FOR TASK 3 ///////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-let rec initializeMemory res mem = 
+let updateMemory v l mem = Map.empty
+
+let rec retrieveArray a =
+    match a with
+    | Elem(i,ae) -> i::retrieveArray ae
+    | EMP -> []
+
+let rec initializeArray v i arr mem =
+    match arr with
+    | x::xs -> initializeArray v (i+1) xs (Map.add (v,i) x mem)
+    | [] -> mem
+
+let rec initializeMemory res mem =
+    let (varMem,arrMem) = mem
     match res with
-    | C (c1,c2) -> initializeMemory c1 (initializeMemory c2 mem)
-    | Assign (Var v,Num i) -> Map.add v i mem
-    | _ -> failwith "Wrong use case of function"
+    | UAss (a1,a2) -> initializeMemory a1 (initializeMemory a2 mem)
+    | UVar (v,i) -> (Map.add v i varMem,arrMem)
+    | UArr (v,ae) -> (varMem, initializeArray v 0 (retrieveArray ae) arrMem)
 
 let makeInputVariables (str:string) = 
     let lexbuf = LexBuffer<char>.FromString str
-    let res = FM4FUNParser.start UserInputLexer.tokenize lexbuf
-    initializeMemory res (Map.ofList [])
+    let res = UserInputParser.start UserInputLexer.tokenize lexbuf
+    initializeMemory res (Map.ofList [],Map.ofList[])
 
-let isWellDefinedMemory variables mem = List.forall (fun x -> Map.containsKey x mem) variables
+let isWellDefinedMemory variables mem = 
+    let (varMem,arrMem) = mem
+    List.forall (fun x -> Map.containsKey x varMem || Map.containsKey (x,0) arrMem) variables
 
 let defineTag input = 
     match input with
@@ -181,7 +206,7 @@ let rec findNext elist mem =
             findNext es mem
 
 let executePG (_,(qstart,qend),_,elist) mem = 
-    let rec execute node mem = 
+    let rec execute node mem =
         let outgoingEdges = findOutgoingEdges elist node
         try
             let (newMem, qnext) = findNext outgoingEdges mem
@@ -190,6 +215,10 @@ let executePG (_,(qstart,qend),_,elist) mem =
             if node = qend then (Terminated, node, mem) else (Stuck, node, mem)
     execute qstart mem
 
+let prettifyMemory (varMem,arrMem) =
+    let varString = List.fold (fun acc (v,a) -> acc+v+": "+string a+"\n") "" (Map.toList varMem)
+    varString + List.fold (fun acc ((v,i),a) -> acc+v+"["+string i+"]: "+string a+"\n") "" (Map.toList arrMem)
+let prettifyEndState (s,N(q),mem) = "Status: "+s.ToString()+"\nNode: "+q+"\n"+prettifyMemory mem
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
@@ -204,25 +233,29 @@ let rec compute n =
         let lexbuf = LexBuffer<char>.FromString input
         printf "Enter initial values for all variables in your program:\n"
         let initialValues = Console.ReadLine()
-
+        let lexbufInput = LexBuffer<char>.FromString initialValues
         try
-            // Create memory
-            let mem = makeInputVariables initialValues
-
             // Parsing input string
             let res = FM4FUNParser.start FM4FUNLexer.tokenize lexbuf
+
+            // Create memory
+            let resInput = UserInputParser.start UserInputLexer.tokenize lexbufInput
+            printfn "%A" resInput
+            let mem = makeInputVariables initialValues
+            printfn "The created memory: %A" mem
+
+            // Create program graph
             printfn "\nDo you want to create a program graph? \nDet / NonDet / No"
             let tag = defineTag (Console.ReadLine())
-
             let pg = FM4FUNCompiler.constructPG res tag
-
+            
             // Check if all variables in program have initial values
             let variables = findVariables pg
-            if not (isWellDefinedMemory (Set.toList variables) mem) then failwith "Memory not well defined"
+            if not (isWellDefinedMemory (Set.toList variables) mem) then raise (MemoryNotWellDefined "Memory not well defined")
 
             printfn "\n############### Parsing successful! ############### \n%s" (prettify res) 
 
-            printf "Memory:\n%A\n" (executePG pg mem)
+            printf "Execution:\n%s\n" (prettifyEndState (executePG pg mem))
 
             printfn "\n############### F# type Program Graph! ############### \n%A" pg
             printfn "\n############### Graphviz version! ############### \n%s\n" (prettifyPG pg)
@@ -230,16 +263,20 @@ let rec compute n =
             // Get ready for a new input
             compute n
 
-        with err -> 
-            // In case the program is not accepted, some hints are printed
-            // indicating where the error occured
-            let endPos = lexbuf.EndPos
-            let linePos = endPos.Line
-            let colPos = endPos.Column
-            let lexString = LexBuffer<char>.LexemeString(lexbuf)
-            printfn "#### Error around: %A line %d col %d\n" lexString linePos colPos
-            // Get ready for a new input
-            compute (n-1)
+        with 
+            | MemoryNotWellDefined e -> printfn "Error: %s" e
+            | Failure f -> printfn "Error: %s" f
+            | :? System.Exception as v ->
+                // In case the program is not accepted, some hints are printed
+                // indicating where the error occured
+                let endPos = lexbufInput.EndPos
+                let linePos = endPos.Line
+                let colPos = endPos.Column
+                let lexString = LexBuffer<char>.LexemeString(lexbufInput)
+                printfn "#### Error around: %A line %d col %d\n" lexString linePos colPos
+                // Get ready for a new input
+                compute (n-1)
+               
 
 // Start interacting with the user
 compute 10

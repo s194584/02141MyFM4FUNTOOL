@@ -5,6 +5,11 @@ open FM4FUNAST
 ///////////////////////////////////////////////////////////////////// THIS IS FOR TASK 3 ///////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Memory contruct
+
+type Memory = Map<string,int>*Map<string*int,int>
+
+
 // Helper functions to find all variables in input program
 let rec findVarAexp aexp = 
     match aexp with
@@ -19,6 +24,7 @@ let rec findVarAexp aexp =
 and findVarVexp var = 
     match var with
     | Var v -> [v]
+    | Array (a,_) -> [a]
 and findVarBexp bexp =
     match bexp with
     | True | False -> []
@@ -51,11 +57,15 @@ let findVariables (_,_,acts,_) = List.fold (fun a x -> Set.union a (Set.ofList (
 // Semantic functions
 
 // Semantics for arithmetic expressions
-let rec arithSem aexp mem = 
+let rec arithSem aexp mem =
+    let (varMem,arrMem) = mem
     match aexp with
-    | V (Var v) -> match Map.tryFind v mem with
+    | V (Var v) -> match Map.tryFind v varMem with
                    | Some a -> a
                    | None -> failwith "Variable not defined"
+    | V (Array(v,i)) -> match Map.tryFind (v,arithSem i mem) arrMem with
+                        | Some a -> a
+                        | None -> failwith "Variable not defined"
     | Num i -> i
     | Plus (x,y) -> (arithSem x mem) + (arithSem y mem)
     | Minus (x,y) -> (arithSem x mem) - (arithSem y mem)
@@ -88,12 +98,18 @@ let rec boolSem bexp mem =
                      z1 || z2
 
 let semantics act mem =
+    let (varMem,arrMem) = mem
     match act with
     | S -> mem
     | A (Assign (Var v,a)) -> let evalA = arithSem a mem
-                              match Map.tryFind v mem with
-                              | Some _ -> Map.add v evalA mem
+                              match Map.tryFind v varMem with
+                              | Some _ -> (Map.add v evalA varMem,arrMem)
                               | None -> failwith "Variable not defined"
+    | A (Assign (Array(v,i),a)) -> let evalA = arithSem a mem
+                                   let evalI = arithSem i mem
+                                   match Map.tryFind (v,evalI) arrMem with
+                                   | Some _ -> (varMem , Map.add (v,evalI) evalA arrMem)
+                                   | None -> failwith "Variable not defined"
     | B b -> if boolSem b mem then mem else failwith "Boolean expression is not true"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

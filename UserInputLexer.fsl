@@ -3,13 +3,13 @@ module UserInputLexer
 open FSharp.Text.Lexing
 open System.Globalization
 open System
-open FM4FUNParser
+open UserInputParser
 }
 
 // Macros for regular expressions:
 let digit       = ['0'-'9']
 let var         = ['a'-'z''A'-'Z'](['a'-'z']|['A'-'Z']|digit|'_')*
-let num         = digit+
+let num         = ('-')?digit+
 
 let whitespace  = ['\u00A0' ' ' '\r' '\t']  
 
@@ -17,9 +17,10 @@ let whitespace  = ['\u00A0' ' ' '\r' '\t']
 rule tokenize = parse
 
 | whitespace        { tokenize lexbuf }
+| '['               { LBRA }
+| ']'               { RBRA }
 | '='               { ASSIGN }
 | ','               { SEP }
 | var               { VAR(LexBuffer<_>.LexemeString lexbuf)}
 | num               { NUM((int) (LexBuffer<_>.LexemeString lexbuf)) }
 | eof               { EOF }
-| _                 { INVALID }

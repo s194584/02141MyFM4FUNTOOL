@@ -1,0 +1,41 @@
+// Open the file that defines the type "expr" we shall use as AST
+%{
+open UserInputAST
+%}
+
+// Declare the tokens (terminal symbols)
+%token <int> NUM
+%token <string> VAR
+%token ASSIGN SEP LBRA RBRA EOF
+
+// We declare the initial non-terminal symbol
+%start start
+
+// We specify the return type of each of then non-terminal symbols
+%type <UserAssignment> start
+%type <UserAssignment> Ass
+%type <UserAssignment> Assa
+%type <ArrayElem> Arr
+%type <int> a
+
+// Grammar productions
+%%
+
+start: Ass EOF                    { $1 }
+
+Ass:
+  | Assa SEP Ass                  { UAss($1,$3) }                // C ; C
+  | Assa                          { $1 }                      // (Ca)
+
+Assa:
+  | VAR ASSIGN a                  { UVar($1,$3)}
+  | VAR ASSIGN LBRA NUM Arr       { UArr($1,Elem($4,$5)) }
+
+Arr:
+  | SEP NUM Arr                   { Elem($2,$3) }
+  | RBRA                          { EMP }
+
+a:
+  | NUM                           { $1 }
+
+%%
