@@ -33,7 +33,8 @@ Then you need to initialize the memory with every assignment seperated by ',' \
 You will then have the option to select whether a program graph should be computed. 
    * Det for deterministic.
    * NonDet for non-deterministic. (Note: The execution will deterministic, but the output graph will be non-deterministic)  
-   * No or everything else for no. \
+   * No or everything else for no. 
+
 After this you will get both the status of the execution and a Graphvis representation of the chosen type of program graph.\
 
 There will be hinting at syntax error by showing the position of the lexbuffer, when the parsing fails.
