@@ -3,9 +3,14 @@ FM4FUN.fsx \
 FM4FUNAST.fs \
 FM4FUNLexer.fsl \
 FM4FUNParser.fsp \
-FM4FUNCompiler.fs
+FM4FUNCompiler.fs \
+FM4FUNInterpreter.fs \
+UserInputAST.fs \
+UserInputLexer.fsl \
+UserInputParser.fsp \
 
 # Installing
+(We have included the necessary files, so you can jump straight to "Running")\ 
 To install you need to compile the Lexer and Parser.
 ## Lexer
 To compile the lexer use the following command: \
@@ -24,9 +29,11 @@ dotnet fsi FM4FUN.fsx
 When you have opened FM4FUN.fsx, you will be promted to enter a GCL-command.
 Here you can copy-paste the command of your choice. \
 The command can be inline or multi-line, if it is multi-line it CANNOT contain double newlines. \
-If the program is parsed then you will get back the formatted GCL-program, 
-otherwise an error will be printed with an approximate position of that error. \
+Then you need to initialize the memory with every assignment seperated by ',' \
 You will then have the option to select whether a program graph should be computed. 
-   * Det for deterministic
-   * NonDet for non-deterministic. 
+   * Det for deterministic.
+   * NonDet for non-deterministic. (Note: The execution will deterministic, but the output graph will be non-deterministic)  
    * No or everything else for no. 
+After this you will get both the status of the execution and a Graphvis representation of the chosen type of program graph. \ \
+
+There will be hinting at syntax error by showing the position of the lexbuffer, when the parsing fails.
