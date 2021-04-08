@@ -179,10 +179,10 @@ let rec initializeMemory res mem =
     | UVar (v,i) -> (Map.add v i varMem,arrMem)
     | UArr (v,ae) -> (varMem, initializeArray v 0 (retrieveArray ae) arrMem)
 
-let makeInputVariables (str:string) = 
-    let lexbuf = LexBuffer<char>.FromString str
-    let res = UserInputParser.start UserInputLexer.tokenize lexbuf
-    initializeMemory res (Map.ofList [],Map.ofList[])
+// let makeInputVariables (str:string) = 
+//     let lexbuf = LexBuffer<char>.FromString str
+//     let res = UserInputParser.start UserInputLexer.tokenize lexbuf
+//     initializeMemory res (Map.ofList [],Map.ofList[])
 
 let isWellDefinedMemory variables mem = 
     let (varMem,arrMem) = mem
@@ -222,7 +222,12 @@ let prettifyEndState (s,N(q),mem) = "Status: "+s.ToString()+"\nNode: "+q+"\n"+pr
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
-
+let stringFromLexBuffer (lexbuf:LexBuffer<char>) = 
+    let endPos = lexbuf.EndPos
+    let linePos = endPos.Line
+    let colPos = endPos.Column
+    let lexString = LexBuffer<char>.LexemeString(lexbuf)
+    sprintf "#### Error around: %A line %d col %d\n" lexString linePos colPos
 // We implement here the function that interacts with the user with n tries
 let rec compute n =
     if n = 0 then
@@ -231,52 +236,50 @@ let rec compute n =
         printfn "\nEnter an GCL-command\nThe command cannot have two consecutive newlines\n(Press enter twice to finish input):"
         let input = getInput ""
         let lexbuf = LexBuffer<char>.FromString input
-        printf "Enter initial values for all variables in your program:\n"
-        let initialValues = Console.ReadLine()
-        let lexbufInput = LexBuffer<char>.FromString initialValues
+        
         try
             // Parsing input string
             let res = FM4FUNParser.start FM4FUNLexer.tokenize lexbuf
 
-            // Create memory
-            let resInput = UserInputParser.start UserInputLexer.tokenize lexbufInput
-            printfn "%A" resInput
-            let mem = makeInputVariables initialValues
-            printfn "The created memory: %A" mem
+            // Get initial values from input
+            printf "Enter initial values for all variables in your program:\n"
+            let initialValues = Console.ReadLine()
+            let lexbufInput = LexBuffer<char>.FromString initialValues
+            try
+                // Create memory from initial values string
+                let resInput = UserInputParser.start UserInputLexer.tokenize lexbufInput
+                let mem = initializeMemory resInput (Map.ofList [],Map.ofList[])
+                printfn "Initialized memory: %s" (prettifyMemory mem)
 
-            // Create program graph
-            printfn "\nDo you want to create a program graph? \nDet / NonDet / No"
-            let tag = defineTag (Console.ReadLine())
-            let pg = FM4FUNCompiler.constructPG res tag
-            
-            // Check if all variables in program have initial values
-            let variables = findVariables pg
-            if not (isWellDefinedMemory (Set.toList variables) mem) then raise (MemoryNotWellDefined "Memory not well defined")
+                // Create program graph
+                printfn "\nDo you want to execute the program graph? \nDet / NonDet / No\n(For execution- only deterministic version is implemented)\n"
+                let tag = defineTag (Console.ReadLine())
+                let pg = FM4FUNCompiler.constructPG res tag
+                
+                // Check if all variables in program have initial values
+                let variables = findVariables pg
+                if not (isWellDefinedMemory (Set.toList variables) mem) then raise (MemoryNotWellDefined "Memory not well defined")
 
-            printfn "\n############### Parsing successful! ############### \n%s" (prettify res) 
+                printfn "\n############### Parsing successful! ############### \n%s" (prettify res) 
 
-            printf "Execution:\n%s\n" (prettifyEndState (executePG pg mem))
+                printf "Execution:\n%s\n" (prettifyEndState (executePG pg mem))
 
-            printfn "\n############### F# type Program Graph! ############### \n%A" pg
-            printfn "\n############### Graphviz version! ############### \n%s\n" (prettifyPG pg)
+                // printfn "\n############### F# type Program Graph! ############### \n%A" pg
+                printfn "\n############### Graphviz version! ############### \n%s\n" (prettifyPG pg)
 
-            // Get ready for a new input
-            compute n
-
-        with 
-            | MemoryNotWellDefined e -> printfn "Error: %s" e
-            | Failure f -> printfn "Error: %s" f
-            | :? System.Exception as v ->
-                // In case the program is not accepted, some hints are printed
-                // indicating where the error occured
-                let endPos = lexbufInput.EndPos
-                let linePos = endPos.Line
-                let colPos = endPos.Column
-                let lexString = LexBuffer<char>.LexemeString(lexbufInput)
-                printfn "#### Error around: %A line %d col %d\n" lexString linePos colPos
                 // Get ready for a new input
-                compute (n-1)
+                compute n
+            with 
+                // Handles the error raised if memory is not well-defined
+                | MemoryNotWellDefined e -> printfn "Error: %s" e
+                // Handles the error from parsing the initial values
+                | err -> printfn "%s" (stringFromLexBuffer lexbufInput)
+                         compute (n-1)
+        with 
+            // Handles the error from parsing the GCL-program
+            | err -> printfn "%s" (stringFromLexBuffer lexbuf)
+                     compute (n-1)
                
 
-// Start interacting with the user
+// Start interacting with the user with 10 tries
 compute 10
