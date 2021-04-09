@@ -2,7 +2,7 @@
 
 // Open modules
 // The following should be the path to the "FsLexYacc.Runtime.dll"
-#r "C:/Users/Jahar/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
+#r "C:/Users/Bruger/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
 
 open FSharp.Text.Lexing
 open System
@@ -29,7 +29,6 @@ open UserInputLexer
 type Status = Terminated | Stuck
 
 exception MemoryNotWellDefined of string
-
 
 // Mutally recursive functions to create a string of the parsed program
 let rec generateCExp cexp =

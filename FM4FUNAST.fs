@@ -2,6 +2,9 @@
 // to store represent arithmetic expressions
 module FM4FUNAST
 
+// Memory construct
+type Memory = Map<string,int>*Map<string*int,int>
+
 type var = 
   | Var of string 
   | Array of (string * aexp)
