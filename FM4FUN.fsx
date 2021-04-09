@@ -26,6 +26,9 @@ open UserInputParser
 #load "UserInputLexer.fs"
 open UserInputLexer
 
+#load "SignAnalysis.fs"
+open SignAnalysis
+
 type Status = Terminated | Stuck
 
 exception MemoryNotWellDefined of string
@@ -240,22 +243,28 @@ let rec compute n =
             // Parsing input string
             let res = FM4FUNParser.start FM4FUNLexer.tokenize lexbuf
 
+            // TODO: Create "menu" for user to choose between Sign Analysis and Step-Wise Execution
+
             // Get initial values from input
             printf "Enter initial values for all variables in your program:\n"
             let initialValues = Console.ReadLine()
             let lexbufInput = LexBuffer<char>.FromString initialValues
             try
-                // Create memory from initial values string
+                // Create memory from initial values string (Step-Wise Execution)
                 let resInput = UserInputParser.start UserInputLexer.tokenize lexbufInput
                 let mem = initializeMemory resInput (Map.ofList [],Map.ofList[])
                 printfn "Initialized memory: %s" (prettifyMemory mem)
 
-                // Create program graph
+                // Create program graph (Step-Wise Execution)
                 printfn "\nDo you want to execute the program graph? \nDet / NonDet / No\n(For execution- only deterministic version is implemented)\n"
                 let tag = defineTag (Console.ReadLine())
                 let pg = FM4FUNCompiler.constructPG res tag
+
+                // Testing Sign Analysis without user input
+                let initialAbstractMemory = (Map.ofList [("i", P); ("n", P); ("x", P); ("y", P)], Map.ofList [("A", Set.ofList [P])])
+                printfn "%A" (computeSolution pg initialAbstractMemory)
                 
-                // Check if all variables in program have initial values
+                // Check if all variables in program have initial values (Step-Wise Execution)
                 let variables = findVariables pg
                 if not (isWellDefinedMemory (Set.toList variables) mem) then raise (MemoryNotWellDefined "Memory not well defined")
 
