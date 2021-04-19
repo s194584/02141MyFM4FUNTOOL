@@ -2,7 +2,7 @@
 
 // Open modules
 // The following should be the path to the "FsLexYacc.Runtime.dll"
-#r "C:/Users/Bruger/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
+#r "C:/Users/krist/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
 
 open FSharp.Text.Lexing
 open System
@@ -25,6 +25,13 @@ open UserInputAST
 open UserInputParser
 #load "UserInputLexer.fs"
 open UserInputLexer
+
+#load "AbstractMemoryAST.fs"
+open AbstractMemoryAST
+#load "AbstractMemoryParser.fs"
+open AbstractMemoryParser
+#load "AbstractMemoryLexer.fs"
+open AbstractMemoryLexer
 
 #load "SignAnalysis.fs"
 open SignAnalysis
@@ -181,6 +188,28 @@ let rec initializeMemory res mem =
     | UVar (v,i) -> (Map.add v i varMem,arrMem)
     | UArr (v,ae) -> (varMem, initializeArray v 0 (retrieveArray ae) arrMem)
 
+let rec retrieveAbstractArray a =
+    match a with
+    | AElem(i,ae) -> i::retrieveAbstractArray ae
+    | AEMP -> []
+
+let rec initializeAbstractArray v arr mem =
+    match arr with
+    | x::xs -> initializeAbstractArray v xs (addToMap v x mem)
+    | [] -> mem
+
+let rec initializeAbstractMemory res mem =
+    let (varMem,arrMem) = mem
+    match res with
+    | AAss (a1,a2) -> initializeAbstractMemory a1 (initializeAbstractMemory a2 mem)
+    | AVar (v,i) -> (Map.add v i varMem,arrMem)
+    | AArr (v,ae) -> (varMem, initializeAbstractArray v (retrieveAbstractArray ae) arrMem)
+
+let rec initializeAbstractMemories res mems =
+    match res with
+    | Abs (a1, a2) -> initializeAbstractMemories a2 (initializeAbstractMemories a1 mems)
+    | AbsE (a) -> Set.add (initializeAbstractMemory a mems) mems
+
 // let makeInputVariables (str:string) = 
 //     let lexbuf = LexBuffer<char>.FromString str
 //     let res = UserInputParser.start UserInputLexer.tokenize lexbuf
@@ -220,7 +249,10 @@ let executePG (_,(qstart,qend),_,elist) mem =
 let prettifyMemory (varMem,arrMem) =
     let varString = List.fold (fun acc (v,a) -> acc+v+": "+string a+"\n") "" (Map.toList varMem)
     varString + List.fold (fun acc ((v,i),a) -> acc+v+"["+string i+"]: "+string a+"\n") "" (Map.toList arrMem)
+
 let prettifyEndState (s,N(q),mem) = "Status: "+s.ToString()+"\nNode: "+q+"\n"+prettifyMemory mem
+
+let prettifyAbstractMemories mems = Set.fold (fun a e -> a + (prettifyMemory e)) "" mems
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
@@ -244,45 +276,93 @@ let rec compute n =
             let res = FM4FUNParser.start FM4FUNLexer.tokenize lexbuf
 
             // TODO: Create "menu" for user to choose between Sign Analysis and Step-Wise Execution
+            printfn "what do you want, bitch.\n 1: Step-wise execution \n 2: Detection of signs analysis \n 3: Security analysis"
+            let answer = Console.ReadLine()
+            match answer with
+            | "1" -> // Step-wise execution
+                     // Get initial values from input
+                     printf "Enter initial values for all variables in your program:\n"
+                     let initialValues = Console.ReadLine()
+                     let lexbufInput = LexBuffer<char>.FromString initialValues
+                     try
+                         // Create memory from initial values string (Step-Wise Execution)
+                         let resInput = UserInputParser.start UserInputLexer.tokenize lexbufInput
+                         let mem = initializeMemory resInput (Map.ofList [],Map.ofList[])
+                         printfn "Initialized memory: %s" (prettifyMemory mem)
 
-            // Get initial values from input
-            printf "Enter initial values for all variables in your program:\n"
-            let initialValues = Console.ReadLine()
-            let lexbufInput = LexBuffer<char>.FromString initialValues
-            try
-                // Create memory from initial values string (Step-Wise Execution)
-                let resInput = UserInputParser.start UserInputLexer.tokenize lexbufInput
-                let mem = initializeMemory resInput (Map.ofList [],Map.ofList[])
-                printfn "Initialized memory: %s" (prettifyMemory mem)
+                         // Create program graph (Step-Wise Execution)
+                         printfn "\nDo you want to execute the program graph? \nDet / NonDet / No\n(For execution only deterministic version is implemented)\n"
+                         let tag = defineTag (Console.ReadLine())
+                         let pg = FM4FUNCompiler.constructPG res tag
 
-                // Create program graph (Step-Wise Execution)
-                printfn "\nDo you want to execute the program graph? \nDet / NonDet / No\n(For execution- only deterministic version is implemented)\n"
-                let tag = defineTag (Console.ReadLine())
-                let pg = FM4FUNCompiler.constructPG res tag
+                         // Check if all variables in program have initial values (Step-Wise Execution)
+                         let variables = findVariables pg
+                         printfn "Variables: %A" variables
 
-                // Testing Sign Analysis without user input
-                let initialAbstractMemory = (Map.ofList [("i", P); ("n", P); ("x", P); ("y", P)], Map.ofList [("A", Set.ofList [P])])
-                printfn "%A" (computeSolution pg initialAbstractMemory)
-                
-                // Check if all variables in program have initial values (Step-Wise Execution)
-                let variables = findVariables pg
-                if not (isWellDefinedMemory (Set.toList variables) mem) then raise (MemoryNotWellDefined "Memory not well defined")
+                         if not (isWellDefinedMemory (Set.toList variables) mem) then raise (MemoryNotWellDefined "Memory not well defined")
 
-                printfn "\n############### Parsing successful! ############### \n%s" (prettify res) 
+                         printfn "\n############### Parsing successful! ############### \n%s" (prettify res)
 
-                printf "Execution:\n%s\n" (prettifyEndState (executePG pg mem))
+                         printf "Execution:\n%s\n" (prettifyEndState (executePG pg mem))
 
-                // printfn "\n############### F# type Program Graph! ############### \n%A" pg
-                printfn "\n############### Graphviz version! ############### \n%s\n" (prettifyPG pg)
+                         // printfn "\n############### F# type Program Graph! ############### \n%A" pg
+                         printfn "\n############### Graphviz version! ############### \n%s\n" (prettifyPG pg)
+                     with
+                        // Handles the error raised if memory is not well-defined
+                        | MemoryNotWellDefined e -> printfn "Error: %s" e
+                        // handles other errors, oops.
+                        | Failure e -> printfn "This is no good: %A" e
+                        // Handles the error from parsing the initial values
+                        | err -> printfn "%s" (stringFromLexBuffer lexbufInput)
+                                 compute (n-1)
 
-                // Get ready for a new input
-                compute n
-            with 
-                // Handles the error raised if memory is not well-defined
-                | MemoryNotWellDefined e -> printfn "Error: %s" e
-                // Handles the error from parsing the initial values
-                | err -> printfn "%s" (stringFromLexBuffer lexbufInput)
-                         compute (n-1)
+            | "2" -> // Detection of sign analysis
+                     // Get initial abstract values from input
+                     printf "Enter initial abstract values for all variables in your program (hit enter twice to end input and once for new memory):\n"
+                     let initialValues = getInput ""
+                     let lexbufInput = LexBuffer<char>.FromString initialValues
+                     try
+                         // Create Abstract memory from initial values string (Step-Wise Execution)
+                         let resInput = AbstractMemoryParser.start AbstractMemoryLexer.tokenize lexbufInput
+                         printfn "Something: %A" resInput
+                         let mems = initializeAbstractMemories resInput (Set.ofList []) //TODO create "InitializeAbstractMemory"
+                         printfn "Initialized memory: %A" (mems)
+
+                         // Create program graph (Step-Wise Execution)
+                         printfn "\nDo you want to execute the program graph? \nDet / NonDet / No\n(For execution, only deterministic version is implemented)\n"
+                         let tag = defineTag (Console.ReadLine())
+                         let pg = FM4FUNCompiler.constructPG res tag
+
+                         // Check if all variables in program have initial values (Step-Wise Execution)
+                         let variables = findVariables pg
+                         printfn "Variables: %A" variables
+
+                         // Testing Sign Analysis without user input
+                         //let initialAbstractMemory = (Map.ofList [("i", P); ("n", P); ("x", P); ("y", P)], Map.ofList [("A", Set.ofList [P])])
+                         //printfn "%A" (computeSolution pg mems)
+
+                         //if not (isWellDefinedMemory (Set.toList variables) mem) then raise (MemoryNotWellDefined "Memory not well defined")
+
+                         //printfn "\n############### Parsing successful! ############### \n%s" (prettify res)
+
+                         //printf "Execution:\n%s\n" (prettifyEndState (executePG pg mem))
+
+                         // printfn "\n############### F# type Program Graph! ############### \n%A" pg
+                         //printfn "\n############### Graphviz version! ############### \n%s\n" (prettifyPG pg)
+                     with
+                        // Handles the error raised if memory is not well-defined
+                        | MemoryNotWellDefined e -> printfn "Error: %s" e
+                        // handles other errors, oops.
+                        //| Failure e -> printfn "This is no good: %A" e
+                        // Handles the error from parsing the initial values
+                        | err -> printfn "%s" (stringFromLexBuffer lexbufInput)
+                                 compute (n-1)
+
+            | "3" -> // Security analysis
+                     printfn "No."
+
+            // Get ready for a new input
+            compute n
         with 
             // Handles the error from parsing the GCL-program
             | err -> printfn "%s" (stringFromLexBuffer lexbuf)

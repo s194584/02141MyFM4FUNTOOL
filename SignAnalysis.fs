@@ -2,11 +2,7 @@ module SignAnalysis
 
 open FM4FUNAST
 open FM4FUNCompiler
-
-type Sign = P | M | Z
-type Bool = TT | FF
-type AbstractMemory = Map<string, Sign> * Map<string, Set<Sign>> // variable memory, array memory
-type AnalysisAssignment = Map<Node, Set<AbstractMemory>>
+open AbstractMemoryAST
 
 // Define abstract operators
 let OpHat set1 op set2 = Set.fold (fun a1 x -> Set.union a1 (Set.fold (fun a2 y -> Set.union a2 (op x y)) (Set.ofList []) set2)) (Set.ofList []) set1
@@ -212,6 +208,6 @@ let createAnalysisAssignment states = List.fold (fun acc s -> Map.add s (Set.ofL
 
 let computeSolution (states, (qStart, _), _, eList) mem = 
     let initialA = createAnalysisAssignment states // Create initial, empty analysis assignment for all nodes in pg
-    let AA = addToMap qStart mem initialA // Initial analysis assignment for start node
+    let AA = Set.fold (fun a e -> addToMap qStart e a) initialA mem
     traverseEdges eList AA true
 

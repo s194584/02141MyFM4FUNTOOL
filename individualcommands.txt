@@ -3,10 +3,17 @@ Malthe:
 "C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fslex/net46/fslex.exe" FM4FUNLexer.fsl --unicode
 ## Create Parser (Change user)
 "C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fsyacc/net46/fsyacc.exe" FM4FUNParser.fsp --module FM4FUNParser
+
 ## Create Lexer (Change user)
 "C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fslex/net46/fslex.exe" UserInputLexer.fsl --unicode
 ## Create Parser (Change user)
 "C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fsyacc/net46/fsyacc.exe" UserInputParser.fsp --module UserInputParser
+
+## Create Lexer (Change user)
+"C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fslex/net46/fslex.exe" AbstractMemoryLexer.fsl --unicode
+## Create Parser (Change user)
+"C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fsyacc/net46/fsyacc.exe" AbstractMemoryParser.fsp --module AbstractMemoryParser
+
 ## Run (if added to path)
 fsi.exe FM4FUN.fsx
 dotnet fsi FM4FUN.fsx
@@ -16,6 +23,18 @@ C:/Users/Bruger/.nuget/packages/fslexyacc/10.0.0/build/fslex/net46/fslex.exe FM4
 C:/Users/Bruger/.nuget/packages/fslexyacc/10.0.0/build/fsyacc/net46/fsyacc.exe FM4FUNParser.fsp --module FM4FUNParser
 
 
-Kristine!: 
-C:/Users/krist/.nuget/packages/fslexyacc/10.0.0/build/fslex/net46/fslex.exe FM4FUNLexer.fsl --unicode
-C:/Users/krist/.nuget/packages/fslexyacc/10.0.0/build/fsyacc/net46/fsyacc.exe FM4FUNParser.fsp --module FM4FUNParser
+Kristine:
+## Create Lexer (Change user)
+"C:/Users/krist/.nuget/packages/fslexyacc/10.0.0/build/fslex/net46/fslex.exe" FM4FUNLexer.fsl --unicode
+## Create Parser (Change user)
+"C:/Users/krist/.nuget/packages/fslexyacc/10.0.0/build/fsyacc/net46/fsyacc.exe" FM4FUNParser.fsp --module FM4FUNParser
+
+## Create Lexer (Change user)
+"C:/Users/krist/.nuget/packages/fslexyacc/10.0.0/build/fslex/net46/fslex.exe" UserInputLexer.fsl --unicode
+## Create Parser (Change user)
+"C:/Users/krist/.nuget/packages/fslexyacc/10.0.0/build/fsyacc/net46/fsyacc.exe" UserInputParser.fsp --module UserInputParser
+
+## Create Lexer (Change user)
+"C:/Users/krist/.nuget/packages/fslexyacc/10.0.0/build/fslex/net46/fslex.exe" AbstractMemoryLexer.fsl --unicode
+## Create Parser (Change user)
+"C:/Users/krist/.nuget/packages/fslexyacc/10.0.0/build/fsyacc/net46/fsyacc.exe" AbstractMemoryParser.fsp --module AbstractMemoryParser

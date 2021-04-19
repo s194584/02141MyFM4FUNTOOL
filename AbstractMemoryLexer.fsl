@@ -1,0 +1,28 @@
+{
+module AbstractMemoryLexer
+open FSharp.Text.Lexing
+open System.Globalization
+open System
+open AbstractMemoryParser
+}
+
+// Macros for regular expressions:
+let digit       = ['0'-'9']
+let var         = ['a'-'z''A'-'Z'](['a'-'z']|['A'-'Z']|digit|'_')*
+
+let whitespace  = ['\u00A0' ' ' '\r' '\t']  
+
+// Rules for each token in our language:
+rule tokenize = parse
+
+| whitespace        { tokenize lexbuf }
+| '{'               { LBRA }
+| '}'               { RBRA }
+| '='               { ASSIGN }
+| ','               { SEP }
+| '+'               { PLUS }
+| '-'               { MINUS }
+| '0'               { ZERO }
+| '\n'              { NL }
+| var               { VAR(LexBuffer<_>.LexemeString lexbuf)}
+| eof               { EOF }

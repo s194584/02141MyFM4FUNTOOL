@@ -40,14 +40,14 @@ and findVarCexp cexp =
     | Skip -> []
     | _ -> failwith "Not supposed to happen"
 
-let findVar act = 
+let findVar (qs, act, qe) =
     match act with
     | B b -> findVarBexp b 
     | S -> []
     | A a -> findVarCexp a
 
 // Find all variables in input program
-let findVariables (_,_,acts,_) = List.fold (fun a x -> Set.union a (Set.ofList (findVar x))) (Set.ofList []) acts
+let findVariables (_,_,_,edges) = List.fold (fun a x -> Set.union a (Set.ofList (findVar x))) (Set.ofList []) edges
 
 // Semantic functions
 
