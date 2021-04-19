@@ -208,7 +208,7 @@ let rec initializeAbstractMemory res mem =
 let rec initializeAbstractMemories res mems =
     match res with
     | Abs (a1, a2) -> initializeAbstractMemories a2 (initializeAbstractMemories a1 mems)
-    | AbsE (a) -> Set.add (initializeAbstractMemory a mems) mems
+    | AbsE (a) -> Set.add (initializeAbstractMemory a (Map.ofList [], Map.ofList [])) mems
 
 // let makeInputVariables (str:string) = 
 //     let lexbuf = LexBuffer<char>.FromString str
@@ -218,6 +218,12 @@ let rec initializeAbstractMemories res mems =
 let isWellDefinedMemory variables mem = 
     let (varMem,arrMem) = mem
     List.forall (fun x -> Map.containsKey x varMem || Map.containsKey (x,0) arrMem) variables
+
+let isWellDefinedAbstractMemory variables mem = 
+    let (varMem,arrMem) = mem
+    List.forall (fun x -> Map.containsKey x varMem || Map.containsKey (x) arrMem) variables    
+
+let isWellDefinedAbstractMemories variables mems = Set.forall (fun e -> isWellDefinedAbstractMemory variables e) mems
 
 let defineTag input = 
     match input with
@@ -253,6 +259,28 @@ let prettifyMemory (varMem,arrMem) =
 let prettifyEndState (s,N(q),mem) = "Status: "+s.ToString()+"\nNode: "+q+"\n"+prettifyMemory mem
 
 let prettifyAbstractMemories mems = Set.fold (fun a e -> a + (prettifyMemory e)) "" mems
+
+let signToString v = 
+    match v with
+    | P -> "+"
+    | M -> "-"
+    | Z -> "0"
+
+let prettifySingleSolution (varMem, arrMem) = 
+    let varString = Map.fold (fun acc k v -> acc + (signToString v) + "\t") "" varMem
+    (Map.fold (fun acc k v -> let arrString = Set.fold (fun a e -> a + signToString e + ", ") "" v
+                              acc + "{ " + (arrString.Substring(0, arrString.Length-2))  + " }" + "\t"
+                              ) varString arrMem)
+                                              
+
+// Node    i   n   x   y   A
+                         //---------------------------------
+                         // qs      +   +   +   +   {+}
+                         //         +   -   +   +   {+,0}
+                         //---------------------------------
+                         // q1      +   +   +   +   {+}
+
+let prettifyAnalysisSolution sol = Map.fold (fun acc (N s) v -> acc + s + if Set.count(v) <> 0 then Set.fold (fun a e -> a + "\t" + prettifySingleSolution e + "\n")"" v else "\n") "" sol                         
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
@@ -324,26 +352,22 @@ let rec compute n =
                      try
                          // Create Abstract memory from initial values string (Step-Wise Execution)
                          let resInput = AbstractMemoryParser.start AbstractMemoryLexer.tokenize lexbufInput
-                         printfn "Something: %A" resInput
                          let mems = initializeAbstractMemories resInput (Set.ofList []) //TODO create "InitializeAbstractMemory"
-                         printfn "Initialized memory: %A" (mems)
 
-                         // Create program graph (Step-Wise Execution)
-                         printfn "\nDo you want to execute the program graph? \nDet / NonDet / No\n(For execution, only deterministic version is implemented)\n"
-                         let tag = defineTag (Console.ReadLine())
-                         let pg = FM4FUNCompiler.constructPG res tag
+                         let pg = FM4FUNCompiler.constructPG res Det
 
                          // Check if all variables in program have initial values (Step-Wise Execution)
                          let variables = findVariables pg
-                         printfn "Variables: %A" variables
+
+                         if not (isWellDefinedAbstractMemories (Set.toList variables) mems) then raise (MemoryNotWellDefined "Memory not well defined")
 
                          // Testing Sign Analysis without user input
                          //let initialAbstractMemory = (Map.ofList [("i", P); ("n", P); ("x", P); ("y", P)], Map.ofList [("A", Set.ofList [P])])
-                         //printfn "%A" (computeSolution pg mems)
+                         let sol = (computeSolution pg mems) //TODO:For some reason, we don't get all options for last state....!?!?!?
 
-                         //if not (isWellDefinedMemory (Set.toList variables) mem) then raise (MemoryNotWellDefined "Memory not well defined")
+                         Map.iter (fun k v -> printfn "%A" v ) sol
 
-                         //printfn "\n############### Parsing successful! ############### \n%s" (prettify res)
+                         printfn "\n############### Parsing successful! ############### \n%s" (prettifyAnalysisSolution sol)
 
                          //printf "Execution:\n%s\n" (prettifyEndState (executePG pg mem))
 
@@ -355,7 +379,8 @@ let rec compute n =
                         // handles other errors, oops.
                         //| Failure e -> printfn "This is no good: %A" e
                         // Handles the error from parsing the initial values
-                        | err -> printfn "%s" (stringFromLexBuffer lexbufInput)
+                        | err -> printfn "Error: %A" err
+                                 printfn "%s" (stringFromLexBuffer lexbufInput)
                                  compute (n-1)
 
             | "3" -> // Security analysis

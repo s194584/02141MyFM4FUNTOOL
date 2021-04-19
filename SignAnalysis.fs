@@ -190,7 +190,7 @@ let analysisAct act memSet =
 let addToMap k v map = 
     match Map.tryFind k map with 
     | Some value -> Map.add k (Set.add v value) map
-    | None -> failwith "Key not defined"
+    | None -> Map.add k (Set.ofList [v]) map
 
 let unionMap k s map = 
     match Map.tryFind k map with 
