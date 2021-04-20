@@ -169,6 +169,10 @@ let rec getInput (str:string) =
 ///////////////////////////////////////////////////////////////////// THIS IS FOR TASK 3 ///////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+let sortNodeList (nodeList: Node list) = //take list of nodes, sort them (qstart, q1..qi, qend), return list of nodes. 
+    let avgNodes = List.filter (fun (N s) -> s <> "qstart" && s <> "qend" ) nodeList 
+    N "qstart" :: (List.sort avgNodes) @ [N "qend"]
+
 let updateMemory v l mem = Map.empty
 
 let rec retrieveArray a =
@@ -209,11 +213,6 @@ let rec initializeAbstractMemories res mems =
     match res with
     | Abs (a1, a2) -> initializeAbstractMemories a2 (initializeAbstractMemories a1 mems)
     | AbsE (a) -> Set.add (initializeAbstractMemory a (Map.ofList [], Map.ofList [])) mems
-
-// let makeInputVariables (str:string) = 
-//     let lexbuf = LexBuffer<char>.FromString str
-//     let res = UserInputParser.start UserInputLexer.tokenize lexbuf
-//     initializeMemory res (Map.ofList [],Map.ofList[])
 
 let isWellDefinedMemory variables mem = 
     let (varMem,arrMem) = mem
@@ -272,18 +271,26 @@ let prettifySingleSolution (varMem, arrMem) =
                               acc + "{ " + (arrString.Substring(0, arrString.Length-2))  + " }" + "\t"
                               ) varString arrMem)
                                               
-
 // Node    i   n   x   y   A
-                         //---------------------------------
-                         // qs      +   +   +   +   {+}
-                         //         +   -   +   +   {+,0}
-                         //---------------------------------
-                         // q1      +   +   +   +   {+}
+// qs      +   +   +   +   {+}
+//         +   -   +   +   {+,0}
+// q1      +   +   +   +   {+}
 
-let prettifyAnalysisSolution sol = Map.fold (fun acc (N s) v -> acc + s + if Set.count(v) <> 0 then Set.fold (fun a e -> a + "\t" + prettifySingleSolution e + "\n")"" v else "\n") "" sol                         
+let prettifyAnalysisSolution sol nodeList variables = //nodeList should already be "sorted"
+    let (varMem, arrMem) = Set.minElement (Map.find (N "qstart") sol)
+    let vars = Map.foldBack (fun k _ acc -> k::acc) varMem (Map.foldBack (fun k _ acc-> k::acc) arrMem [])
+    let variableList = List.fold (fun acc e -> acc + e + "\t") "Nodes\t" vars
+    List.fold (fun acc (N s) -> let v = Map.find (N s) sol
+                                acc + s + 
+                                if Set.count(v) <> 0 
+                                    then Set.fold (fun a e -> a + "\t" + prettifySingleSolution e + "\n")"" v 
+                                    else "\n" 
+              ) (variableList + "\n") nodeList           
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
+
 let stringFromLexBuffer (lexbuf:LexBuffer<char>) = 
     let endPos = lexbuf.EndPos
     let linePos = endPos.Line
@@ -355,6 +362,7 @@ let rec compute n =
                          let mems = initializeAbstractMemories resInput (Set.ofList []) //TODO create "InitializeAbstractMemory"
 
                          let pg = FM4FUNCompiler.constructPG res Det
+                         let (states,_,_,_) = pg
 
                          // Check if all variables in program have initial values (Step-Wise Execution)
                          let variables = findVariables pg
@@ -367,7 +375,7 @@ let rec compute n =
 
                          Map.iter (fun k v -> printfn "%A" v ) sol
 
-                         printfn "\n############### Parsing successful! ############### \n%s" (prettifyAnalysisSolution sol)
+                         printfn "\n############### Parsing successful! ############### \n%s" (prettifyAnalysisSolution sol (sortNodeList states) variables)
 
                          //printf "Execution:\n%s\n" (prettifyEndState (executePG pg mem))
 

@@ -50,7 +50,7 @@ let ADiv sign1 sign2 =
     | _, Z -> Set.ofList []
     | Z, _ -> Set.ofList [Z]
     | P, M | M, P -> Set.ofList [M]
-    | _ -> Set.ofList [P]
+    | _ -> Set.ofList [P;Z]
 
 let APow sign1 sign2 = 
     match sign1, sign2 with
