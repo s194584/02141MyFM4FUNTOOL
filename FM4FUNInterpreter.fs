@@ -64,7 +64,9 @@ let rec arithSem aexp mem =
     | Num i -> i
     | Plus (x,y) -> (arithSem x mem) + (arithSem y mem)
     | Minus (x,y) -> (arithSem x mem) - (arithSem y mem)
-    | Div (x,y) -> (arithSem x mem) / (arithSem y mem)
+    | Div (x,y) -> let divisor = (arithSem y mem)
+                   if divisor = 0 then failwith "Division by zero"
+                   (arithSem x mem) / divisor
     | Mult (x,y) -> (arithSem x mem) * (arithSem y mem)
     | Pow (x,y) -> let z2 = arithSem y mem
                    if z2 < 0 then failwith "Power cannot be negative"
