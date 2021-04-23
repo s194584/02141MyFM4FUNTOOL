@@ -1,18 +1,23 @@
 Malthe:
-## Create Lexer (Change user)
+## FM4FUN
 "C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fslex/net46/fslex.exe" FM4FUNLexer.fsl --unicode
-## Create Parser (Change user)
 "C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fsyacc/net46/fsyacc.exe" FM4FUNParser.fsp --module FM4FUNParser
 
-## Create Lexer (Change user)
+## UserInput
 "C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fslex/net46/fslex.exe" UserInputLexer.fsl --unicode
-## Create Parser (Change user)
 "C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fsyacc/net46/fsyacc.exe" UserInputParser.fsp --module UserInputParser
 
-## Create Lexer (Change user)
+## AbstractMemory
 "C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fslex/net46/fslex.exe" AbstractMemoryLexer.fsl --unicode
-## Create Parser (Change user)
 "C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fsyacc/net46/fsyacc.exe" AbstractMemoryParser.fsp --module AbstractMemoryParser
+
+## Classification
+"C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fslex/net46/fslex.exe" ClassificationLexer.fsl --unicode
+"C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fsyacc/net46/fsyacc.exe" ClassificationParser.fsp --module ClassificationParser
+
+## Lattice
+"C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fslex/net46/fslex.exe" LatticeLexer.fsl --unicode
+"C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fsyacc/net46/fsyacc.exe" LatticeParser.fsp --module LatticeParser
 
 ## Run (if added to path)
 fsi.exe FM4FUN.fsx

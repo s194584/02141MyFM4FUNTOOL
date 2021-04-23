@@ -38,7 +38,13 @@ and findVarCexp cexp =
     match cexp with
     | Assign (v,a) -> findVarVexp v @ findVarAexp a
     | Skip -> []
-    | _ -> failwith "Not supposed to happen"
+    | C(c1, c2) -> findVarCexp c1 @ findVarCexp c2
+    | If(gc) -> findVarGCexp gc
+    | Do(gc) -> findVarGCexp gc
+and findVarGCexp gcexp =
+    match gcexp with
+    | Then(b, c) -> findVarBexp b @ findVarCexp c
+    | GC(gc1, gc2) -> findVarGCexp gc1 @ findVarGCexp gc2
 
 let findVar (qs, act, qe) =
     match act with

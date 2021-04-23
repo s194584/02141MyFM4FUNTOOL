@@ -2,7 +2,7 @@
 
 // Open modules
 // The following should be the path to the "FsLexYacc.Runtime.dll"
-#r "C:/Users/krist/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
+#r "C:/Users/Jahar/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
 
 open FSharp.Text.Lexing
 open System
@@ -35,6 +35,23 @@ open AbstractMemoryLexer
 
 #load "SignAnalysis.fs"
 open SignAnalysis
+
+#load "ClassificationAST.fs"
+open ClassificationAST
+#load "ClassificationParser.fs"
+open ClassificationParser
+#load "ClassificationLexer.fs"
+open ClassificationLexer
+
+#load "LatticeAST.fs"
+open LatticeAST
+#load "LatticeParser.fs"
+open LatticeParser
+#load "LatticeLexer.fs"
+open LatticeLexer
+
+#load "SecurityAnalysis.fs"
+open SecurityAnalysis
 
 type Status = Terminated | Stuck
 
@@ -287,6 +304,9 @@ let prettifyAnalysisSolution sol nodeList variables = //nodeList should already 
                                     else "\n" 
               ) (variableList + "\n") nodeList           
 
+let prettifyFRs frs = let (fullStr:string) = Set.fold (fun str (x,y) -> str + x + " -> " + y+", ") "" frs
+                      if fullStr.Length = 0 then "" else fullStr.Substring(0,fullStr.Length-2)
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
@@ -307,11 +327,10 @@ let rec compute n =
         let lexbuf = LexBuffer<char>.FromString input
         
         try
-            // Parsing input string
+            // Parsing the GCL-command
             let res = FM4FUNParser.start FM4FUNLexer.tokenize lexbuf
 
-            // TODO: Create "menu" for user to choose between Sign Analysis and Step-Wise Execution
-            printfn "what do you want, bitch.\n 1: Step-wise execution \n 2: Detection of signs analysis \n 3: Security analysis"
+            printfn "what do you want, biitch.\n 1: Step-wise execution \n 2: Detection of signs analysis \n 3: Security analysis"
             let answer = Console.ReadLine()
             match answer with
             | "1" -> // Step-wise execution
@@ -340,13 +359,12 @@ let rec compute n =
 
                          printf "Execution:\n%s\n" (prettifyEndState (executePG pg mem))
 
-                         // printfn "\n############### F# type Program Graph! ############### \n%A" pg
                          printfn "\n############### Graphviz version! ############### \n%s\n" (prettifyPG pg)
                      with
                         // Handles the error raised if memory is not well-defined
                         | MemoryNotWellDefined e -> printfn "Error: %s" e
                         // handles other errors, oops.
-                        | Failure e -> printfn "This is no good: %A" e
+                        | Failure e -> printfn "Error: %A" e
                         // Handles the error from parsing the initial values
                         | err -> printfn "%s" (stringFromLexBuffer lexbufInput)
                                  compute (n-1)
@@ -359,7 +377,7 @@ let rec compute n =
                      try
                          // Create Abstract memory from initial values string (Step-Wise Execution)
                          let resInput = AbstractMemoryParser.start AbstractMemoryLexer.tokenize lexbufInput
-                         let mems = initializeAbstractMemories resInput (Set.ofList []) //TODO create "InitializeAbstractMemory"
+                         let mems = initializeAbstractMemories resInput (Set.ofList [])
 
                          let pg = FM4FUNCompiler.constructPG res Det
                          let (states,_,_,_) = pg
@@ -369,31 +387,70 @@ let rec compute n =
 
                          if not (isWellDefinedAbstractMemories (Set.toList variables) mems) then raise (MemoryNotWellDefined "Memory not well defined")
 
-                         // Testing Sign Analysis without user input
-                         //let initialAbstractMemory = (Map.ofList [("i", P); ("n", P); ("x", P); ("y", P)], Map.ofList [("A", Set.ofList [P])])
-                         let sol = (computeSolution pg mems) //TODO:For some reason, we don't get all options for last state....!?!?!?
+                         let sol = (computeSolution pg mems)
 
                          Map.iter (fun k v -> printfn "%A" v ) sol
 
                          printfn "\n############### Parsing successful! ############### \n%s" (prettifyAnalysisSolution sol (sortNodeList states) variables)
 
-                         //printf "Execution:\n%s\n" (prettifyEndState (executePG pg mem))
-
-                         // printfn "\n############### F# type Program Graph! ############### \n%A" pg
-                         //printfn "\n############### Graphviz version! ############### \n%s\n" (prettifyPG pg)
                      with
                         // Handles the error raised if memory is not well-defined
                         | MemoryNotWellDefined e -> printfn "Error: %s" e
-                        // handles other errors, oops.
-                        //| Failure e -> printfn "This is no good: %A" e
                         // Handles the error from parsing the initial values
                         | err -> printfn "Error: %A" err
                                  printfn "%s" (stringFromLexBuffer lexbufInput)
                                  compute (n-1)
 
             | "3" -> // Security analysis
-                     printfn "No."
+                     let variables = Set.ofList (findVarCexp res)
+                     // Get security lattice from input
+                     printf "Enter security lattice:\n"
+                     let securityLatticeInput = Console.ReadLine()
+                     let lexbufSecurityLatticeInput = LexBuffer<char>.FromString securityLatticeInput
+                     
+                     try
+                        // Create Abstract memory from initial values string (Step-Wise Execution)
+                        let securityLattice = LatticeParser.start LatticeLexer.tokenize lexbufSecurityLatticeInput
 
+                        // Compute lattice
+                        let FL = computeFL securityLattice
+
+                        printf "Enter security classification:\n"
+                        let classificationInput = Console.ReadLine()
+                        let lexbufClassificationInput = LexBuffer<char>.FromString classificationInput
+                        try
+                        // Create Abstract memory from initial values string (Step-Wise Execution)
+                        let classification = ClassificationParser.start ClassificationLexer.tokenize lexbufClassificationInput
+                        // Compute security classification
+                        let L = computeSC classification (Map.ofList [])
+                        // Does all variables have a entry in security classification
+                        if not (isWellDefinedSC variables L) then failwith "Security Classification is not well defined."
+
+
+                        let actualFR = sec res (Set.ofList [])
+
+                        let allowedFR = findAllowedFlowRelations variables L FL
+
+                        let violatingFR = Set.difference actualFR allowedFR
+
+                        let result = if (Set.count violatingFR) = 0 then "secure" else "not secure"
+
+                        printfn "\nActual: %s" (prettifyFRs actualFR)
+                        printfn "Allowed: %s" (prettifyFRs allowedFR)
+                        printfn "Violations: %s" (prettifyFRs violatingFR)
+                        printfn "Result: %s" result
+
+                        with
+                        // Handles the error from parsing the initial values
+                        | err -> printfn "Error: %s" err.Message
+                                 printfn "%s" (stringFromLexBuffer lexbufClassificationInput)
+                                 compute (n-1)
+                     with
+                        // Handles the error from parsing the initial values
+                        | err -> printfn "Error: %s" err.Message
+                                 printfn "%s" (stringFromLexBuffer lexbufSecurityLatticeInput)
+                                 compute (n-1)
+            | _ -> compute n
             // Get ready for a new input
             compute n
         with 
