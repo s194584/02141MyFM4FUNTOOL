@@ -1,3 +1,4 @@
+<!---
 # Key files
 FM4FUN.fsx \
 FM4FUNAST.fs \
@@ -8,7 +9,7 @@ FM4FUNInterpreter.fs \
 UserInputAST.fs \
 UserInputLexer.fsl \
 UserInputParser.fsp \
-
+-->
 # Installing
 (We have included the necessary files, so you can jump straight to "Running")\ 
 To install you need to compile the Lexer and Parser.
