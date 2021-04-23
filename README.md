@@ -24,7 +24,7 @@ First update the path at the top of the FM4FUN.fsx file to match your path to th
 To run the program, you need to run the FM4FUN.fsx like you normally would.
 We used: \
 dotnet fsi FM4FUN.fsx
-
+<!---
 # Using
 When you have opened FM4FUN.fsx, you will be promted to enter a GCL-command.
 Here you can copy-paste the command of your choice. \
@@ -38,3 +38,4 @@ You will then have the option to select whether a program graph should be comput
 After this you will get both the status of the execution and a Graphvis representation of the chosen type of program graph.\
 
 There will be hinting at syntax error by showing the position of the lexbuffer, when the parsing fails.
+-->
