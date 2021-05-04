@@ -2,56 +2,59 @@
 
 // Open modules
 // The following should be the path to the "FsLexYacc.Runtime.dll"
-#r "C:/Users/Jahar/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
+#r "C:/Users/Krist/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
 
 open FSharp.Text.Lexing
 open System
 
-#load "FM4FUNAST.fs"
+#load "FM4FUN/FM4FUNAST.fs"
 open FM4FUNAST
-#load "FM4FUNParser.fs"
+#load "FM4FUN/FM4FUNParser.fs"
 open FM4FUNParser
-#load "FM4FUNLexer.fs"
+#load "FM4FUN/FM4FUNLexer.fs"
 open FM4FUNLexer
 
-#load "FM4FUNCompiler.fs"
+#load "FM4FUN/FM4FUNCompiler.fs"
 open FM4FUNCompiler
-#load "FM4FUNInterpreter.fs"
+#load "FM4FUN/FM4FUNInterpreter.fs"
 open FM4FUNInterpreter
 
-#load "UserInputAST.fs"
-open UserInputAST
-#load "UserInputParser.fs"
-open UserInputParser
-#load "UserInputLexer.fs"
-open UserInputLexer
+#load "ConcreteMemory/ConcreteMemoryAST.fs"
+open ConcreteMemoryAST
+#load "ConcreteMemory/ConcreteMemoryParser.fs"
+open ConcreteMemoryParser
+#load "ConcreteMemory/ConcreteMemoryLexer.fs"
+open ConcreteMemoryLexer
 
-#load "AbstractMemoryAST.fs"
+#load "SignAnalysis/AbstractMemoryAST.fs"
 open AbstractMemoryAST
-#load "AbstractMemoryParser.fs"
+#load "SignAnalysis/AbstractMemoryParser.fs"
 open AbstractMemoryParser
-#load "AbstractMemoryLexer.fs"
+#load "SignAnalysis/AbstractMemoryLexer.fs"
 open AbstractMemoryLexer
 
-#load "SignAnalysis.fs"
+#load "SignAnalysis/SignAnalysis.fs"
 open SignAnalysis
 
-#load "ClassificationAST.fs"
+#load "SecurityAnalysis/ClassificationAST.fs"
 open ClassificationAST
-#load "ClassificationParser.fs"
+#load "SecurityAnalysis/ClassificationParser.fs"
 open ClassificationParser
-#load "ClassificationLexer.fs"
+#load "SecurityAnalysis/ClassificationLexer.fs"
 open ClassificationLexer
 
-#load "LatticeAST.fs"
+#load "SecurityAnalysis/LatticeAST.fs"
 open LatticeAST
-#load "LatticeParser.fs"
+#load "SecurityAnalysis/LatticeParser.fs"
 open LatticeParser
-#load "LatticeLexer.fs"
+#load "SecurityAnalysis/LatticeLexer.fs"
 open LatticeLexer
 
-#load "SecurityAnalysis.fs"
+#load "SecurityAnalysis/SecurityAnalysis.fs"
 open SecurityAnalysis
+
+#load "ModelChecker/ModelChecker.fs"
+open ModelChecker
 
 type Status = Terminated | Stuck
 
@@ -243,8 +246,8 @@ let isWellDefinedAbstractMemories variables mems = Set.forall (fun e -> isWellDe
 
 let defineTag input = 
     match input with
-    | "Det" -> Det
-    | "NonDet" -> NonDet
+    | "det" -> Det
+    | "nondet" -> NonDet
     | _ -> Undef
 
 let findOutgoingEdges elist node = List.filter (fun (qstart,_,_) -> node = qstart) elist
@@ -307,6 +310,14 @@ let prettifyAnalysisSolution sol nodeList variables = //nodeList should already 
 let prettifyFRs frs = let (fullStr:string) = Set.fold (fun str (x,y) -> str + x + " -> " + y+", ") "" frs
                       if fullStr.Length = 0 then "" else fullStr.Substring(0,fullStr.Length-2)
 
+let rec addStatus stuckStates = 
+    match stuckStates with
+    | [] -> []
+    | (N s, mem)::res when s = "qend" -> (Terminated, N s, mem)::(addStatus res)
+    | (N s, mem)::res -> (Stuck, N s, mem)::(addStatus res) 
+
+let prettifyEndStates states = List.fold (fun acc elem -> acc + prettifyEndState elem + "\n") "" states                            
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
@@ -330,23 +341,23 @@ let rec compute n =
             // Parsing the GCL-command
             let res = FM4FUNParser.start FM4FUNLexer.tokenize lexbuf
 
-            printfn "what do you want, biitch.\n 1: Step-wise execution \n 2: Detection of signs analysis \n 3: Security analysis"
+            printfn "what do you want, biitch.\n 1: Step-wise execution \n 2: Detection of signs analysis \n 3: Security analysis \n 4: Model Checker"
             let answer = Console.ReadLine()
             match answer with
             | "1" -> // Step-wise execution
                      // Get initial values from input
-                     printf "Enter initial values for all variables in your program:\n"
+                     printf "\nEnter initial values for all variables in your program:\n"
                      let initialValues = Console.ReadLine()
                      let lexbufInput = LexBuffer<char>.FromString initialValues
                      try
                          // Create memory from initial values string (Step-Wise Execution)
-                         let resInput = UserInputParser.start UserInputLexer.tokenize lexbufInput
+                         let resInput = ConcreteMemoryParser.start ConcreteMemoryLexer.tokenize lexbufInput
                          let mem = initializeMemory resInput (Map.ofList [],Map.ofList[])
                          printfn "Initialized memory: %s" (prettifyMemory mem)
 
                          // Create program graph (Step-Wise Execution)
                          printfn "\nDo you want to execute the program graph? \nDet / NonDet / No\n(For execution only deterministic version is implemented)\n"
-                         let tag = defineTag (Console.ReadLine())
+                         let tag = defineTag ((Console.ReadLine()).ToLower())
                          let pg = FM4FUNCompiler.constructPG res tag
 
                          // Check if all variables in program have initial values (Step-Wise Execution)
@@ -450,6 +461,44 @@ let rec compute n =
                         | err -> printfn "Error: %s" err.Message
                                  printfn "%s" (stringFromLexBuffer lexbufSecurityLatticeInput)
                                  compute (n-1)
+            | "4" -> // Get initial values from input
+                     printf "\nEnter initial values for all variables in your program:\n"
+                     let initialValues = Console.ReadLine()
+                     let lexbufInput = LexBuffer<char>.FromString initialValues
+                     try
+                         // Create memory from initial values string (Step-Wise Execution)
+                         let resInput = ConcreteMemoryParser.start ConcreteMemoryLexer.tokenize lexbufInput
+                         let mem = initializeMemory resInput (Map.ofList [],Map.ofList[])
+                         printfn "Initialized memory: %s" (prettifyMemory mem)
+
+                         // Create program graph (Step-Wise Execution)
+                         printfn "\nDo you want to execute the program graph? \nDet / NonDet / No\n(For execution only deterministic version is implemented)\n"
+                         let tag = defineTag ((Console.ReadLine()).ToLower())
+                         let pg = FM4FUNCompiler.constructPG res tag
+
+                         // Check if all variables in program have initial values (Step-Wise Execution)
+                         let variables = findVariables pg
+                         printfn "Variables: %A" variables
+
+                         if not (isWellDefinedMemory (Set.toList variables) mem) then raise (MemoryNotWellDefined "Memory not well defined")
+
+                         //check stuck configs
+                         let (nodeList, (qstart, qend), acts, edges) = pg
+                         let initialConfig = (qstart, mem)
+                         let stuckStates = stuckConfigurationChecker edges initialConfig (Set.ofList []) [initialConfig] []
+                         let stuckStatesWithStatus = addStatus stuckStates
+
+                         printf "Stuck states: \n%s\n" (prettifyEndStates stuckStatesWithStatus)
+
+                     with
+                        // Handles the error raised if memory is not well-defined
+                        | MemoryNotWellDefined e -> printfn "Error: %s" e
+                        // handles other errors, oops.
+                        | Failure e -> printfn "Error: %A" e
+                        // Handles the error from parsing the initial values
+                        | err -> printfn "%s" (stringFromLexBuffer lexbufInput)
+                                 compute (n-1)
+
             | _ -> compute n
             // Get ready for a new input
             compute n

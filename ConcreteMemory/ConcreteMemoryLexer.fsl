@@ -1,9 +1,9 @@
 {
-module UserInputLexer
+module ConcreteMemoryLexer
 open FSharp.Text.Lexing
 open System.Globalization
 open System
-open UserInputParser
+open ConcreteMemoryParser
 }
 
 // Macros for regular expressions:

@@ -6,9 +6,9 @@ FM4FUNLexer.fsl \
 FM4FUNParser.fsp \
 FM4FUNCompiler.fs \
 FM4FUNInterpreter.fs \
-UserInputAST.fs \
-UserInputLexer.fsl \
-UserInputParser.fsp \
+ConcreteMemoryAST.fs \
+ConcreteMemoryLexer.fsl \
+ConcreteMemoryParser.fsp \
 -->
 # Installing
 (We have included the necessary files, so you can jump straight to "Running")\ 

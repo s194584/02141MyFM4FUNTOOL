@@ -1,4 +1,4 @@
-module UserInputAST
+module ConcreteMemoryAST
 
 type ArrayElem = | Elem of int * ArrayElem 
                  | EMP

@@ -1,12 +1,12 @@
-# 1 "UserInputLexer.fsl"
+# 1 "ConcreteMemoryLexer.fsl"
  
-module UserInputLexer
+module ConcreteMemoryLexer
 open FSharp.Text.Lexing
 open System.Globalization
 open System
-open UserInputParser
+open ConcreteMemoryParser
 
-# 9 "UserInputLexer.fs"
+# 9 "ConcreteMemoryLexer.fs"
 let trans : uint16[] array = 
     [| 
     (* State 0 *)
@@ -41,45 +41,45 @@ let rec _fslex_dummy () = _fslex_dummy()
 and tokenize  lexbuf =
   match _fslex_tables.Interpret(0,lexbuf) with
   | 0 -> ( 
-# 19 "UserInputLexer.fsl"
+# 19 "ConcreteMemoryLexer.fsl"
                                      tokenize lexbuf 
-# 46 "UserInputLexer.fs"
+# 46 "ConcreteMemoryLexer.fs"
           )
   | 1 -> ( 
-# 20 "UserInputLexer.fsl"
+# 20 "ConcreteMemoryLexer.fsl"
                                      LBRA 
-# 51 "UserInputLexer.fs"
+# 51 "ConcreteMemoryLexer.fs"
           )
   | 2 -> ( 
-# 21 "UserInputLexer.fsl"
+# 21 "ConcreteMemoryLexer.fsl"
                                      RBRA 
-# 56 "UserInputLexer.fs"
+# 56 "ConcreteMemoryLexer.fs"
           )
   | 3 -> ( 
-# 22 "UserInputLexer.fsl"
+# 22 "ConcreteMemoryLexer.fsl"
                                      ASSIGN 
-# 61 "UserInputLexer.fs"
+# 61 "ConcreteMemoryLexer.fs"
           )
   | 4 -> ( 
-# 23 "UserInputLexer.fsl"
+# 23 "ConcreteMemoryLexer.fsl"
                                      SEP 
-# 66 "UserInputLexer.fs"
+# 66 "ConcreteMemoryLexer.fs"
           )
   | 5 -> ( 
-# 24 "UserInputLexer.fsl"
+# 24 "ConcreteMemoryLexer.fsl"
                                      VAR(LexBuffer<_>.LexemeString lexbuf)
-# 71 "UserInputLexer.fs"
+# 71 "ConcreteMemoryLexer.fs"
           )
   | 6 -> ( 
-# 25 "UserInputLexer.fsl"
+# 25 "ConcreteMemoryLexer.fsl"
                                      NUM((int) (LexBuffer<_>.LexemeString lexbuf)) 
-# 76 "UserInputLexer.fs"
+# 76 "ConcreteMemoryLexer.fs"
           )
   | 7 -> ( 
-# 26 "UserInputLexer.fsl"
+# 26 "ConcreteMemoryLexer.fsl"
                                      EOF 
-# 81 "UserInputLexer.fs"
+# 81 "ConcreteMemoryLexer.fs"
           )
   | _ -> failwith "tokenize"
 
-# 3000000 "UserInputLexer.fs"
+# 3000000 "ConcreteMemoryLexer.fs"
