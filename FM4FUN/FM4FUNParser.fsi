@@ -16,9 +16,12 @@ type token =
   | MINUS
   | MULT
   | DIV
+  | MOD
   | POW
   | LPAR
   | RPAR
+  | BREAK
+  | CONTINUE
   | TRUE
   | FALSE
   | AND
@@ -52,9 +55,12 @@ type tokenId =
     | TOKEN_MINUS
     | TOKEN_MULT
     | TOKEN_DIV
+    | TOKEN_MOD
     | TOKEN_POW
     | TOKEN_LPAR
     | TOKEN_RPAR
+    | TOKEN_BREAK
+    | TOKEN_CONTINUE
     | TOKEN_TRUE
     | TOKEN_FALSE
     | TOKEN_AND

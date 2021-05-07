@@ -50,11 +50,14 @@ rule tokenize = parse
 | '-'               { MINUS }
 | '*'               { MULT }
 | '/'               { DIV }
+| '%'               { MOD }
 | '^'               { POW }
 | '('               { LPAR }
 | ')'               { RPAR }
 | "true"            { TRUE }
 | "false"           { FALSE }
+| "break"           { BREAK }
+| "continue"        { CONTINUE }
 | "&&"              { SAND }
 | "||"              { SOR }
 | '&'               { AND }

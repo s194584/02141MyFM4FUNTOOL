@@ -2,7 +2,7 @@
 
 // Open modules
 // The following should be the path to the "FsLexYacc.Runtime.dll"
-#r "C:/Users/Krist/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
+#r "C:/Users/Jahar/.nuget/packages/fslexyacc.runtime/10.0.0/lib/net46/FsLexYacc.Runtime.dll"
 
 open FSharp.Text.Lexing
 open System
@@ -65,6 +65,8 @@ let rec generateCExp cexp =
     match cexp with
     | Assign (x,y) -> "" + generateVar x + ":=" + generateAExp y
     | Skip -> "skip"
+    | Break -> "break"
+    | Continue -> "continue"
     | C (c1,c2) -> generateCExp c1 + ";\n" + generateCExp c2
     | If gc -> "if " + generateGCExp gc + "\nfi"
     | Do gc -> "do " + generateGCExp gc + "\nod"
@@ -80,6 +82,7 @@ and generateAExp aexp =
     | Minus (x,y) -> generateAExp x + "-" + generateAExp y 
     | Mult (x,y) -> generateAExp x + "*" + generateAExp y 
     | Div (x,y) -> generateAExp x + "/" + generateAExp y 
+    | Mod (x,y) -> generateAExp x + "%" + generateAExp y 
     | UMinus x -> "-" + generateAExp x 
     | Pow (x,y) -> generateAExp x + "^" + generateAExp y
 and generateGCExp gcexp =
@@ -469,24 +472,22 @@ let rec compute n =
                          // Create memory from initial values string (Step-Wise Execution)
                          let resInput = ConcreteMemoryParser.start ConcreteMemoryLexer.tokenize lexbufInput
                          let mem = initializeMemory resInput (Map.ofList [],Map.ofList[])
-                         printfn "Initialized memory: %s" (prettifyMemory mem)
 
                          // Create program graph (Step-Wise Execution)
-                         printfn "\nDo you want to execute the program graph? \nDet / NonDet / No\n(For execution only deterministic version is implemented)\n"
+                         printfn "\nDo you want to execute the program graph? \nDet / NonDet / No\n"
                          let tag = defineTag ((Console.ReadLine()).ToLower())
                          let pg = FM4FUNCompiler.constructPG res tag
 
                          // Check if all variables in program have initial values (Step-Wise Execution)
                          let variables = findVariables pg
-                         printfn "Variables: %A" variables
 
                          if not (isWellDefinedMemory (Set.toList variables) mem) then raise (MemoryNotWellDefined "Memory not well defined")
 
                          //check stuck configs
                          let (nodeList, (qstart, qend), acts, edges) = pg
                          let initialConfig = (qstart, mem)
-                         let stuckStates = stuckConfigurationChecker edges initialConfig (Set.ofList []) [initialConfig] []
-                         let stuckStatesWithStatus = addStatus stuckStates
+                         let stuckStates = stuckConfigurationCheckerTest edges (Set.ofList [initialConfig]) 100
+                         let stuckStatesWithStatus = addStatus (Set.toList stuckStates)
 
                          printf "Stuck states: \n%s\n" (prettifyEndStates stuckStatesWithStatus)
 

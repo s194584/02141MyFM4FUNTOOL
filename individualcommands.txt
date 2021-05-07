@@ -1,7 +1,7 @@
 Malthe:
 ## FM4FUN
-"C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fslex/net46/fslex.exe" FM4FUNLexer.fsl --unicode
-"C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fsyacc/net46/fsyacc.exe" FM4FUNParser.fsp --module FM4FUNParser
+"C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fslex/net46/fslex.exe" FM4FUN\FM4FUNLexer.fsl --unicode
+"C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fsyacc/net46/fsyacc.exe" FM4FUN\FM4FUNParser.fsp --module FM4FUNParser
 
 ## UserInput
 "C:/Users/Jahar/.nuget/packages/fslexyacc/10.0.0/build/fslex/net46/fslex.exe" UserInputLexer.fsl --unicode
